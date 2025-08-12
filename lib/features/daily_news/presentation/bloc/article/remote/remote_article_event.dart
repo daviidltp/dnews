@@ -10,3 +10,7 @@ abstract class RemoteArticlesEvent extends Equatable {
 class GetArticles extends RemoteArticlesEvent {
   const GetArticles();
 }
+
+class RefreshFirebaseArticles extends RemoteArticlesEvent {
+  const RefreshFirebaseArticles();
+}

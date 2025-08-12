@@ -4,6 +4,8 @@ import 'package:symmetry_showcase/features/daily_news/domain/entities/article.da
 abstract class ArticleRepository {
 
   Future<DataState<List<ArticleEntity>>> getNewsArticles();
-
+  Future<DataState<List<ArticleEntity>>> refreshNewsArticles();
+  Future<DataState<List<ArticleEntity>>> getFirebaseArticles();
+  Future<DataState<void>> uploadArticle(ArticleEntity article);
 
 }

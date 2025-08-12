@@ -109,6 +109,7 @@ class FeaturedArticleTile extends StatelessWidget {
               article.title!,
               style: const TextStyle(
                 fontSize: 24,
+                fontFamily: 'Times New Roman',
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
                 height: 1.2,

@@ -87,6 +87,7 @@ class ArticleTile extends StatelessWidget {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Times New Roman',
               color: AppColors.textPrimary,
               height: 1.3,
             ),
@@ -102,6 +103,7 @@ class ArticleTile extends StatelessWidget {
             article.description!,
             style: const TextStyle(
               fontSize: 16,
+              fontFamily: 'Times New Roman',
               color: AppColors.textSecondary,
               height: 1.4,
             ),
