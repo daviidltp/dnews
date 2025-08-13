@@ -38,8 +38,8 @@ Future<void> init() async {
   // Use cases - Calculate lecture time (no dependencies)
   sl.registerSingleton<CalculateLectureTime>(CalculateLectureTime());
 
-  // Repository (needs NewsApiService, FirestoreService and CalculateLectureTime)
-  sl.registerSingleton<ArticleRepository>(ArticleRepositoryImpl(sl(), sl(), sl()));
+  // Repository (needs NewsApiService, FirestoreService, FirebaseStorageService and CalculateLectureTime)
+  sl.registerSingleton<ArticleRepository>(ArticleRepositoryImpl(sl(), sl(), sl(), sl()));
 
   // Use cases - Get articles (needs ArticleRepository)
   sl.registerSingleton<GetArticleUseCase>(GetArticleUseCase(sl()));

@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
-import 'package:symmetry_showcase/features/daily_news/domain/usecases/calculate_lecture_time.dart';
-import 'package:symmetry_showcase/features/daily_news/data/data_sources/local/firebase_storage_service.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_event.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_state.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/widgets/article_markdown_body.dart';
-import 'package:symmetry_showcase/injection_container.dart';
 
 class PreviewArticlePage extends StatefulWidget {
   final String title;
@@ -30,7 +27,6 @@ class PreviewArticlePage extends StatefulWidget {
 }
 
 class _PreviewArticlePageState extends State<PreviewArticlePage> {
-  bool _isUploadingImage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,26 +35,18 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
       body: BlocListener<UploadArticleBloc, UploadArticleState>(
         listener: (context, state) {
           if (state is UploadArticleSuccess) {
-            setState(() {
-              _isUploadingImage = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('¡Artículo subido exitosamente!'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            // Regresar a la pantalla principal (cerrar tanto preview como upload)
-            // y retornar true para indicar que el artículo se subió exitosamente
+            // Regresar con resultado true para indicar éxito
             Navigator.of(context).pop(true);
           } else if (state is UploadArticleFailed) {
-            setState(() {
-              _isUploadingImage = false;
-            });
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error al subir artículo: ${state.exception.message}'),
                 backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
               ),
             );
           }
@@ -266,26 +254,12 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    FutureBuilder<int>(
-                      future: _calculateReadingTime(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Text(
-                            '${snapshot.data} min read',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          );
-                        }
-                        return const Text(
-                          'Calculando...',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        );
-                      },
+                    Text(
+                      '${_estimateReadingTime()} min read',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
@@ -312,16 +286,14 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
       padding: const EdgeInsets.all(16),
       child: BlocBuilder<UploadArticleBloc, UploadArticleState>(
         builder: (context, state) {
-          final isLoading = state is UploadArticleLoading || _isUploadingImage;
+          final isLoading = state is UploadArticleLoading;
           
           return SizedBox(
             width: MediaQuery.of(context).size.width * 0.9,
             child: ElevatedButton (
               onPressed: isLoading ? null : _submitArticle,
               style: ElevatedButton.styleFrom(
-                backgroundColor: isLoading 
-                    ? Colors.black.withOpacity(0.7) 
-                    : AppColors.textPrimary,
+                backgroundColor: isLoading ? AppColors.textSecondary : AppColors.textPrimary,
                 foregroundColor: Colors.white,
                 padding: EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
@@ -341,9 +313,9 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          _isUploadingImage ? 'Subiendo post...' : 'Guardando artículo...',
-                          style: const TextStyle(
+                        const Text(
+                          'Uploading article...',
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -351,7 +323,7 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
                       ],
                     )
                   : const Text(
-                      'Publicar Artículo',
+                      'Upload Article',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -364,73 +336,33 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
     );
   }
 
-  Future<int> _calculateReadingTime() async {
-    final calculateLectureTime = sl<CalculateLectureTime>();
-    return await calculateLectureTime.call(
-      CalculateLectureTimeParams(content: widget.content),
+  int _estimateReadingTime() {
+    // Estimación simple para mostrar en preview
+    // La cálculación real se hará en el repositorio cuando se suba el artículo
+    const wordsPerMinute = 200;
+    final words = widget.content.split(RegExp(r'\s+')).length;
+    final estimatedTime = (words / wordsPerMinute).ceil();
+    return estimatedTime < 1 ? 1 : estimatedTime;
+  }
+
+  void _submitArticle() {
+    // Crear un artículo temporal con datos básicos para iniciar el proceso de subida
+    final article = ArticleEntity(
+      title: widget.title.trim(),
+      author: 'David',
+      description: widget.description.trim(),
+      content: widget.content.trim(),
+      url: null,
+      urlToImage: widget.image.path, // Path local, se procesará en el use case
+      source: 'DNews',
+      lectureTime: null, // Se calculará en el use case
     );
+    
+    // El bloc se encargará de emitir el estado de loading inmediatamente
+    context.read<UploadArticleBloc>().add(UploadArticle(article: article));
   }
 
-  Future<void> _submitArticle() async {
-    setState(() {
-      _isUploadingImage = true;
-    });
 
-    try {
-
-      
-      // Subir imagen a Firebase Storage
-      final storageService = sl<FirebaseStorageService>();
-      final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      
-
-      final imageUrl = await storageService.uploadImage(widget.image, fileName);
-
-
-      // Calcular tiempo de lectura
-
-      final lectureTime = await _calculateReadingTime();
-
-
-      // Usar la descripción proporcionada por el usuario
-
-      final description = widget.description;
-
-
-      // Crear artículo con la URL de la imagen subida
-
-      final article = ArticleEntity(
-        title: widget.title.trim(),
-        author: 'David',
-        description: description,
-        content: widget.content.trim(),
-        url: null,
-        urlToImage: imageUrl,
-        source: 'DNews',
-        lectureTime: lectureTime,
-      );
-      
-
-
-      // Enviar evento al bloc
-
-      context.read<UploadArticleBloc>().add(UploadArticle(article: article));
-      
-
-    } catch (e) {
-
-      setState(() {
-        _isUploadingImage = false;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al subir imagen: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
 
 
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:confetti/confetti.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_state.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
@@ -14,8 +15,27 @@ import 'package:symmetry_showcase/features/daily_news/presentation/pages/saved_a
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/cubit/category_selection_cubit.dart';
 
-class DailyNews extends StatelessWidget {
+class DailyNews extends StatefulWidget {
   const DailyNews({super.key});
+
+  @override
+  State<DailyNews> createState() => _DailyNewsState();
+}
+
+class _DailyNewsState extends State<DailyNews> {
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 1));
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,15 +43,59 @@ class DailyNews extends StatelessWidget {
       create: (context) => CategorySelectionCubit(),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: _buildBody(),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => _navigateToUpload(context),
-          backgroundColor: AppColors.textPrimary,
-          foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.edit_note_sharp),
+        body: Stack(
+          children: [
+            SafeArea(
+              child: _buildBody(),
+            ),
+            // Confetti widget
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: 1.57, // radians - hacia abajo
+                maxBlastForce: 5,
+                minBlastForce: 2,
+                emissionFrequency: 0.05,
+                numberOfParticles: 90,
+                gravity: 0.05,
+                shouldLoop: false,
+                colors: const [
+                  Colors.green,
+                  Colors.blue,
+                  Colors.pink,
+                  Colors.orange,
+                  Colors.purple
+                ],
+              ),
+            ),
+            // Botón de crear artículo posicionado absolutamente
+            Positioned(
+              bottom: 30,
+              right: 30,
+              child: Material(
+                elevation: 6,
+                borderRadius: BorderRadius.circular(64),
+                color: AppColors.textPrimary,
+                child: InkWell(
+                  onTap: () => _navigateToUpload(context),
+                  borderRadius: BorderRadius.circular(64),
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(64),
+                    ),
+                    child: const Icon(
+                      Icons.edit_note_sharp,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -376,10 +440,71 @@ class DailyNews extends StatelessWidget {
       ),
     );
     
-    // Si el artículo se subió exitosamente, refrescar solo los artículos de Firebase
+    // Si el artículo se subió exitosamente, mostrar confetti y snackbar, luego refrescar artículos
     if (result == true && context.mounted) {
+      _showSuccessWithConfetti();
       context.read<RemoteArticlesBloc>().add(const RefreshFirebaseArticles());
     }
+  }
+
+  void _showSuccessWithConfetti() {
+    // Iniciar la animación de confetti
+    _confettiController.play();
+    
+    // Mostrar el snackbar mejorado
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.green,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Success!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    'Article uploaded successfully',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 16),
+        elevation: 6,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   Future<void> _navigateToSavedArticles(BuildContext context) async {

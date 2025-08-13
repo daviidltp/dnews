@@ -26,7 +26,7 @@ class CategorySelectionCubit extends Cubit<CategorySelectionState> {
   static const Map<int, List<ArticleCategory>> _categoryMap = {
     0: [ArticleCategory.general, ArticleCategory.dnews], // General incluye tanto general como DNews
     1: [ArticleCategory.business],
-    2: [ArticleCategory.sports], 
+    2: [ArticleCategory.health], 
     3: [ArticleCategory.science],
     4: [ArticleCategory.technology],
     5: [ArticleCategory.dnews], // Solo DNews
@@ -52,7 +52,7 @@ class CategorySelectionCubit extends Cubit<CategorySelectionState> {
   static const List<String> categoryNames = [
     'General',
     'Business', 
-    'Sports',
+    'Health',
     'Science',
     'Technology',
     'DNews',

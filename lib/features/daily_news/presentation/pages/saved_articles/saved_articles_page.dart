@@ -35,25 +35,11 @@ class _SavedArticlesPageState extends State<SavedArticlesPage> {
             if (state is BookmarkArticleRemoved) {
               // Cuando se elimina un artículo, refrescar la lista
               context.read<SavedArticlesBloc>().add(const RefreshSavedArticles());
-              
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Artículo eliminado de guardados'),
-                  backgroundColor: AppColors.textSecondary,
-                  duration: Duration(seconds: 2),
-                ),
-              );
+
             } else if (state is BookmarkArticleSaved) {
               // Cuando se guarda un artículo, refrescar la lista
               context.read<SavedArticlesBloc>().add(const RefreshSavedArticles());
               
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Artículo guardado'),
-                  backgroundColor: AppColors.primary,
-                  duration: Duration(seconds: 2),
-                ),
-              );
             }
           },
           child: Column(
@@ -133,7 +119,7 @@ class _SavedArticlesPageState extends State<SavedArticlesPage> {
                 textAlign: TextAlign.left,
               ),
               Text(
-                '$articlesCount saved articles',
+                '$articlesCount saved article' + (articlesCount == 1 ? '' : 's'),
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -150,29 +136,24 @@ class _SavedArticlesPageState extends State<SavedArticlesPage> {
   }
 
   Widget _buildBody() {
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<SavedArticlesBloc>().add(const RefreshSavedArticles());
+    return BlocBuilder<SavedArticlesBloc, SavedArticlesState>(
+      builder: (context, state) {
+        if (state is SavedArticlesLoading) {
+          return _buildLoadingState();
+        }
+        
+        if (state is SavedArticlesDone) {
+          final savedArticles = state.articles ?? [];
+          
+          if (savedArticles.isEmpty) {
+            return _buildEmptyState();
+          }
+          
+          return _buildSavedArticlesList(savedArticles);
+        }
+        
+        return _buildErrorState();
       },
-      child: BlocBuilder<SavedArticlesBloc, SavedArticlesState>(
-        builder: (context, state) {
-          if (state is SavedArticlesLoading) {
-            return _buildLoadingState();
-          }
-          
-          if (state is SavedArticlesDone) {
-            final savedArticles = state.articles ?? [];
-            
-            if (savedArticles.isEmpty) {
-              return _buildEmptyState();
-            }
-            
-            return _buildSavedArticlesList(savedArticles);
-          }
-          
-          return _buildErrorState();
-        },
-      ),
     );
   }
 

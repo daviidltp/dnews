@@ -4,7 +4,7 @@ enum ArticleCategory {
   general,
   business,
   science,
-  sports,
+  health,
   technology,
   dnews, // Categoría específica para noticias de Firebase
 }
@@ -18,8 +18,8 @@ extension ArticleCategoryExtension on ArticleCategory {
         return 'Business';
       case ArticleCategory.science:
         return 'Science';
-      case ArticleCategory.sports:
-        return 'Sports';
+      case ArticleCategory.health:
+        return 'Health';
       case ArticleCategory.technology:
         return 'Technology';
       case ArticleCategory.dnews:
@@ -35,8 +35,8 @@ extension ArticleCategoryExtension on ArticleCategory {
         return 'business';
       case ArticleCategory.science:
         return 'science';
-      case ArticleCategory.sports:
-        return 'sports';
+      case ArticleCategory.health:
+        return 'health';
       case ArticleCategory.technology:
         return 'technology';
       case ArticleCategory.dnews:
@@ -52,8 +52,8 @@ extension ArticleCategoryExtension on ArticleCategory {
         return ArticleCategory.business;
       case 'science':
         return ArticleCategory.science;
-      case 'sports':
-        return ArticleCategory.sports;
+      case 'health':
+        return ArticleCategory.health;
       case 'technology':
         return ArticleCategory.technology;
       case 'dnews':

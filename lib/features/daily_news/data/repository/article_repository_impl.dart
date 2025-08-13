@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:symmetry_showcase/features/daily_news/domain/repository/article_repository.dart';
 import 'package:symmetry_showcase/core/resources/data_state.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
 import 'package:symmetry_showcase/features/daily_news/data/data_sources/remote/news_api_service.dart';
 import 'package:symmetry_showcase/features/daily_news/data/data_sources/local/firestore_service.dart';
+import 'package:symmetry_showcase/features/daily_news/data/data_sources/local/firebase_storage_service.dart';
 import 'package:symmetry_showcase/features/daily_news/data/models/article.dart';
 import 'package:symmetry_showcase/core/constants/constants.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/calculate_lecture_time.dart';
@@ -12,11 +14,13 @@ class ArticleRepositoryImpl implements ArticleRepository {
 
   final NewsApiService _newsApiService;
   final FirestoreService _firestoreService;
+  final FirebaseStorageService _firebaseStorageService;
   final CalculateLectureTime _calculateLectureTime;
 
   ArticleRepositoryImpl(
     this._newsApiService, 
     this._firestoreService,
+    this._firebaseStorageService,
     this._calculateLectureTime,
   );
 
@@ -328,11 +332,38 @@ class ArticleRepositoryImpl implements ArticleRepository {
   @override
   Future<DataState<void>> uploadArticle(ArticleEntity article) async {
     try {
+      ArticleEntity processedArticle = article;
+      
+      // Si urlToImage es un path local, subir la imagen primero
+      if (article.urlToImage != null && !article.urlToImage!.startsWith('http')) {
+        final file = File(article.urlToImage!);
+        if (await file.exists()) {
+          final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          final imageUrl = await _firebaseStorageService.uploadImage(file, fileName);
+          
+          // Actualizar el artículo con la URL de la imagen subida
+          processedArticle = ArticleEntity(
+            id: article.id,
+            title: article.title,
+            author: article.author,
+            description: article.description,
+            content: article.content,
+            url: article.url,
+            urlToImage: imageUrl,
+            publishedAt: article.publishedAt,
+            source: article.source,
+            lectureTime: article.lectureTime,
+            category: article.category,
+            saved: article.saved,
+          );
+        }
+      }
+      
       // Calcular tiempo de lectura si no existe o es 0
-      int lectureTime = article.lectureTime ?? 0;
+      int lectureTime = processedArticle.lectureTime ?? 0;
       if (lectureTime == 0) {
         // Para artículos subidos, usar contenido + descripción
-        final content = '${article.content ?? ''} ${article.description ?? ''}';
+        final content = '${processedArticle.content ?? ''} ${processedArticle.description ?? ''}';
         lectureTime = await _calculateLectureTime.call(
           CalculateLectureTimeParams(content: content),
         );
@@ -341,17 +372,17 @@ class ArticleRepositoryImpl implements ArticleRepository {
       // Crear un modelo de artículo con un ID único
       final articleModel = ArticleModel(
         id: DateTime.now().millisecondsSinceEpoch, // ID único basado en timestamp
-        author: article.author,
-        title: article.title,
-        description: article.description,
-        url: article.url,
-        urlToImage: article.urlToImage,
+        author: processedArticle.author,
+        title: processedArticle.title,
+        description: processedArticle.description,
+        url: processedArticle.url,
+        urlToImage: processedArticle.urlToImage,
         publishedAt: DateTime.now().toIso8601String(), // Fecha actual
-        content: article.content,
+        content: processedArticle.content,
         source: 'DNews', // Source fijo para artículos subidos por usuarios
         lectureTime: lectureTime,
         category: ArticleCategory.dnews, // Siempre DNews para artículos subidos
-        saved: article.saved,
+        saved: processedArticle.saved,
       );
 
       // Guardar en Firestore

@@ -20,21 +20,52 @@ class ArticleViewPage extends StatefulWidget {
   State<ArticleViewPage> createState() => _ArticleViewPageState();
 }
 
-class _ArticleViewPageState extends State<ArticleViewPage> {
+class _ArticleViewPageState extends State<ArticleViewPage> 
+    with TickerProviderStateMixin {
   late bool _isBookmarked;
+  late AnimationController _tapAnimationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
 
   @override
   void initState() {
     super.initState();
     _isBookmarked = widget.article.saved;
 
+    // Configurar la animación de tap
+    _tapAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
     
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(CurvedAnimation(
+      parent: _tapAnimationController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.1,
+    ).animate(CurvedAnimation(
+      parent: _tapAnimationController,
+      curve: Curves.easeInOut,
+    ));
+
     // Verificar el estado actual del bookmark después del primer frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Forzar que el BLoC esté en estado inicial antes de la consulta
       final bloc = context.read<BookmarkArticleBloc>();
       bloc.add(CheckBookmarkStatus(article: widget.article));
     });
+  }
+
+  @override
+  void dispose() {
+    _tapAnimationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -103,60 +134,44 @@ class _ArticleViewPageState extends State<ArticleViewPage> {
           const Spacer(),
           // Bookmark button
           BlocConsumer<BookmarkArticleBloc, BookmarkArticleState>(
-            listenWhen: (previous, current) {
-              return true; // Escuchar todos los cambios
-            },
             listener: (context, state) {
               if (state is BookmarkArticleSaved) {
                 setState(() {
                   _isBookmarked = true;
                 });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Artículo guardado'),
-                    backgroundColor: AppColors.primary,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
               } else if (state is BookmarkArticleRemoved) {
                 setState(() {
                   _isBookmarked = false;
                 });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Artículo eliminado de guardados'),
-                    backgroundColor: AppColors.textSecondary,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
               } else if (state is BookmarkStatusChecked) {
                 setState(() {
                   _isBookmarked = state.isBookmarked;
                 });
-              } else if (state is BookmarkArticleError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: ${state.error.message}'),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
               }
             },
             builder: (context, state) {
-              final isLoading = state is BookmarkArticleLoading;
-              
               return Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: isLoading ? null : () {
+                  onTap: () {
+                    // Animación inmediata al tocar
+                    _tapAnimationController.forward().then((_) {
+                      _tapAnimationController.reverse();
+                    });
+                    
+                    // Cambiar estado inmediatamente para efecto visual
+                    setState(() {
+                      _isBookmarked = !_isBookmarked;
+                    });
+                    
+                    // Enviar acción al BLoC
                     if (_isBookmarked) {
                       context.read<BookmarkArticleBloc>().add(
-                        RemoveBookmarkArticle(article: widget.article),
+                        SaveBookmarkArticle(article: widget.article),
                       );
                     } else {
                       context.read<BookmarkArticleBloc>().add(
-                        SaveBookmarkArticle(article: widget.article),
+                        RemoveBookmarkArticle(article: widget.article),
                       );
                     }
                   },
@@ -167,20 +182,22 @@ class _ArticleViewPageState extends State<ArticleViewPage> {
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                     ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    child: AnimatedBuilder(
+                      animation: _tapAnimationController,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _scaleAnimation.value,
+                          child: Transform.rotate(
+                            angle: _rotationAnimation.value,
+                            child: Icon(
+                              _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                              color: _isBookmarked ? AppColors.primary : AppColors.textPrimary,
+                              size: 24,
                             ),
-                          )
-                        : Icon(
-                            _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                            color: _isBookmarked ? AppColors.primary : AppColors.textPrimary,
-                            size: 24,
                           ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               );

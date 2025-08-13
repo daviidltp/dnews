@@ -72,6 +72,23 @@ class ArticleModel extends ArticleEntity {
     return null;
   }
 
+  ArticleEntity toEntity() {
+    return ArticleEntity(
+      id: id,
+      author: author,
+      title: title,
+      description: description,
+      url: url,
+      urlToImage: urlToImage,
+      publishedAt: publishedAt,
+      content: content,
+      source: source,
+      lectureTime: lectureTime,
+      category: category,
+      saved: saved,
+    );
+  }
+
   Map<String, dynamic> toFirestore() {
     return {
       'id': id,
