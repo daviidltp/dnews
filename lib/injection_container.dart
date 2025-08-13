@@ -7,6 +7,8 @@ import 'package:symmetry_showcase/features/daily_news/data/data_sources/local/fi
 import 'package:symmetry_showcase/features/daily_news/data/repository/article_repository_impl.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/repository/article_repository.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_article.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_articles_by_categories.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_articles_by_category.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_firebase_articles.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/upload_article.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/calculate_lecture_time.dart';
@@ -35,6 +37,12 @@ Future<void> init() async {
 
   // Use cases - Get articles (needs ArticleRepository)
   sl.registerSingleton<GetArticleUseCase>(GetArticleUseCase(sl()));
+
+  // Use cases - Get articles by categories (needs ArticleRepository)
+  sl.registerSingleton<GetArticlesByCategoriesUseCase>(GetArticlesByCategoriesUseCase(sl()));
+
+  // Use cases - Get articles by category (needs ArticleRepository)
+  sl.registerSingleton<GetArticlesByCategoryUseCase>(GetArticlesByCategoryUseCase(sl()));
 
   // Use cases - Get Firebase articles (needs ArticleRepository)
   sl.registerSingleton<GetFirebaseArticlesUseCase>(GetFirebaseArticlesUseCase(sl()));

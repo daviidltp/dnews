@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
 
 class AnimatedImagePicker extends StatefulWidget {
@@ -52,6 +53,16 @@ class _AnimatedImagePickerState extends State<AnimatedImagePicker>
   }
 
   void _onTapDown(TapDownDetails details) {
+    // Feedback háptico inmediato al presionar, si es clickeable
+    if (widget.isClickable) {
+      // iOS: selectionClick es el más natural; Android: usar mediumImpact para mejor percepción
+      if (Platform.isIOS) {
+        HapticFeedback.selectionClick();
+      } else {
+        HapticFeedback.mediumImpact();
+      }
+    }
+
     // Solo animar si está clickeable y la animación está habilitada
     if (widget.isClickable && widget.enableAnimation) {
       setState(() {
@@ -76,6 +87,8 @@ class _AnimatedImagePickerState extends State<AnimatedImagePicker>
     // Solo ejecutar la acción si está clickeable
     if (!widget.isClickable) return;
     
+    // El feedback háptico se lanza en onTapDown para mayor inmediatez
+
     // Ejecutar la acción
     widget.onTap();
     
@@ -98,7 +111,7 @@ class _AnimatedImagePickerState extends State<AnimatedImagePicker>
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final imageHeight = screenHeight * 0.53; // Misma altura que featured article
+    final imageHeight = screenHeight * 0.5; // Misma altura que featured article
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),

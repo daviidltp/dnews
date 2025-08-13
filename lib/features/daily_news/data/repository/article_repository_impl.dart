@@ -23,10 +23,10 @@ class ArticleRepositoryImpl implements ArticleRepository {
   @override
   Future<DataState<List<ArticleEntity>>> getNewsArticles() async {
     try {
-      // 1. Obtener artículos de Firestore y API en paralelo
+      // 1. Obtener artículos de Firestore y API (todas las categorías) en paralelo
       final results = await Future.wait([
         _getArticlesFromFirestore(),
-        _getArticlesFromApi(),
+        _getArticlesFromApiAllCategories(),
       ]);
       
       final firestoreArticles = results[0];
@@ -67,11 +67,35 @@ class ArticleRepositoryImpl implements ArticleRepository {
     }
   }
 
-  Future<List<ArticleEntity>> _getArticlesFromApi() async {
+  Future<List<ArticleEntity>> _getArticlesFromApiAllCategories() async {
+    final allArticles = <ArticleEntity>[];
+    
+    // Obtener artículos de todas las categorías en paralelo
+    final futures = newsCategories.map((categoryName) async {
+      try {
+        final category = ArticleCategoryExtension.fromString(categoryName);
+        return await _getArticlesFromApiByCategory(category);
+      } catch (e) {
+        print('Error getting articles for category $categoryName: $e');
+        return <ArticleEntity>[];
+      }
+    });
+    
+    final results = await Future.wait(futures);
+    
+    // Combinar todos los resultados
+    for (final articles in results) {
+      allArticles.addAll(articles);
+    }
+    
+    return allArticles;
+  }
+
+  Future<List<ArticleEntity>> _getArticlesFromApiByCategory(ArticleCategory category) async {
     final httpResponse = await _newsApiService.getNewsArticles(
       apiKey, 
       country, 
-      category,
+      category.apiValue,
     );
 
     if (httpResponse.response.statusCode == 200) {
@@ -81,7 +105,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
       
       for (final articleJson in articlesJson) {
         final articleMap = articleJson as Map<String, dynamic>;
-        final articleModel = ArticleModel.fromJson(articleMap);
+        final articleModel = ArticleModel.fromJson(articleMap, category);
         
         // Calcular tiempo de lectura basado en el contenido
         final lectureTime = await _calculateLectureTime.call(
@@ -100,6 +124,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
           content: articleModel.content,
           source: articleModel.source,
           lectureTime: lectureTime,
+          category: category,
         );
         
         articles.add(articleWithLectureTime);
@@ -149,7 +174,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
       // Obtener artículos de ambas fuentes sin guardar API en Firebase
       final results = await Future.wait([
         _getArticlesFromFirestore(),
-        _getArticlesFromApi(),
+        _getArticlesFromApiAllCategories(),
       ]);
       
       final firestoreArticles = results[0];
@@ -184,6 +209,72 @@ class ArticleRepositoryImpl implements ArticleRepository {
   }
 
   @override
+  Future<DataState<List<ArticleEntity>>> getNewsArticlesByCategories(List<ArticleCategory> categories) async {
+    try {
+      final List<ArticleEntity> allArticles = [];
+      
+      // Obtener artículos de Firebase si se incluye DNews
+      if (categories.contains(ArticleCategory.dnews)) {
+        final firestoreArticles = await _getArticlesFromFirestore();
+        allArticles.addAll(firestoreArticles);
+      }
+      
+      // Obtener artículos de API para las categorías solicitadas (excluyendo DNews)
+      final apiCategories = categories.where((cat) => cat != ArticleCategory.dnews).toList();
+      if (apiCategories.isNotEmpty) {
+        final futures = apiCategories.map((category) async {
+          try {
+            return await _getArticlesFromApiByCategory(category);
+          } catch (e) {
+            print('Error getting articles for category ${category.displayName}: $e');
+            return <ArticleEntity>[];
+          }
+        });
+        
+        final results = await Future.wait(futures);
+        for (final articles in results) {
+          allArticles.addAll(articles);
+        }
+      }
+      
+      // Ordenar por fecha de publicación (más recientes primero)
+      allArticles.sort((a, b) {
+        if (a.publishedAt == null || b.publishedAt == null) return 0;
+        return b.publishedAt!.compareTo(a.publishedAt!);
+      });
+      
+      return DataSuccess(allArticles);
+    } catch (e) {
+      return DataFailed(DioException(
+        requestOptions: RequestOptions(path: ''),
+        type: DioExceptionType.badResponse,
+        error: e,
+      ));
+    }
+  }
+
+  @override
+  Future<DataState<List<ArticleEntity>>> getNewsArticlesByCategory(ArticleCategory category) async {
+    try {
+      if (category == ArticleCategory.dnews) {
+        // Solo obtener artículos de Firebase
+        final firestoreArticles = await _getArticlesFromFirestore();
+        return DataSuccess(firestoreArticles);
+      } else {
+        // Obtener artículos de la API para la categoría específica
+        final articles = await _getArticlesFromApiByCategory(category);
+        return DataSuccess(articles);
+      }
+    } catch (e) {
+      return DataFailed(DioException(
+        requestOptions: RequestOptions(path: ''),
+        type: DioExceptionType.badResponse,
+        error: e,
+      ));
+    }
+  }
+
+  @override
   Future<DataState<void>> uploadArticle(ArticleEntity article) async {
     try {
       // Crear un modelo de artículo con un ID único
@@ -196,11 +287,11 @@ class ArticleRepositoryImpl implements ArticleRepository {
         urlToImage: article.urlToImage,
         publishedAt: DateTime.now().toIso8601String(), // Fecha actual
         content: article.content,
-        source: article.source ?? 'Usuario', // Source por defecto
+        source: 'DNews', // Source fijo para artículos subidos por usuarios
         lectureTime: article.lectureTime,
+        category: ArticleCategory.dnews, // Siempre DNews para artículos subidos
       );
 
-      print('Uploading article: ${articleModel.title}');
       // Guardar en Firestore
       await _firestoreService.saveArticle(articleModel);
       print('Article uploaded successfully to Firebase');

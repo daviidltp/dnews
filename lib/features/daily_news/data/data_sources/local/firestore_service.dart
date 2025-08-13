@@ -42,10 +42,16 @@ class FirestoreServiceImpl implements FirestoreService {
   @override
   Future<void> saveArticle(ArticleModel article) async {
     try {
+      final articleData = article.toFirestore();
+      print('Guardando en Firestore: ${articleData}');
+      
       await _firestore
           .collection(_articlesCollection)
-          .add(article.toFirestore());
+          .add(articleData);
+          
+      print('Artículo guardado exitosamente en Firestore');
     } catch (e) {
+      print('Error al guardar en Firestore: $e');
       throw Exception('Error al guardar artículo en Firestore: $e');
     }
   }

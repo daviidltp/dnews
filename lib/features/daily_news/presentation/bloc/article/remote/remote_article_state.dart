@@ -3,13 +3,20 @@ import 'package:dio/dio.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
 
 abstract class RemoteArticlesState extends Equatable {
-  final List<ArticleEntity>? articles;
+  final List<ArticleEntity>? allArticles; // Todos los artículos cargados
+  final List<ArticleEntity>? filteredArticles; // Artículos filtrados por categoría
   final DioException? error;
+  final List<ArticleCategory>? selectedCategories;
 
-  const RemoteArticlesState({this.articles, this.error});
+  const RemoteArticlesState({
+    this.allArticles,
+    this.filteredArticles, 
+    this.error, 
+    this.selectedCategories,
+  });
 
   @override
-  List<Object?> get props => [articles!, error!];
+  List<Object?> get props => [allArticles, filteredArticles, error, selectedCategories];
 }
 
 class RemoteArticlesLoading extends RemoteArticlesState {
@@ -17,7 +24,15 @@ class RemoteArticlesLoading extends RemoteArticlesState {
 }
 
 class RemoteArticlesDone extends RemoteArticlesState {
-  const RemoteArticlesDone(List<ArticleEntity> articles) : super(articles: articles);
+  const RemoteArticlesDone({
+    required List<ArticleEntity> allArticles,
+    required List<ArticleEntity> filteredArticles,
+    List<ArticleCategory>? selectedCategories,
+  }) : super(
+         allArticles: allArticles,
+         filteredArticles: filteredArticles, 
+         selectedCategories: selectedCategories,
+       );
 }
 
 class RemoteArticlesError extends RemoteArticlesState {

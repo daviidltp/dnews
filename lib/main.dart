@@ -6,6 +6,7 @@ import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/pages/home/daily_news.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
 import 'package:symmetry_showcase/firebase_options.dart';
 import 'package:symmetry_showcase/injection_container.dart' as di;
 import 'package:symmetry_showcase/injection_container.dart';

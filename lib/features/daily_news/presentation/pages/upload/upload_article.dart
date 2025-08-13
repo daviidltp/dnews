@@ -163,7 +163,7 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
                   color: _isFormValid ? Colors.white : Colors.white.withOpacity(0.3),
                 ),
                 child: Text(
-                  'Siguiente',
+                  'Continue',
                   style: TextStyle(
                     color: _isFormValid ? Colors.blue : Colors.blue.withOpacity(0.4),
                     fontSize: 16,
@@ -196,17 +196,18 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  fontFamily: 'Merriweather',
                   color: AppColors.textPrimary,
-                  height: 1.1,
+                  height: 1.2,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'Title of the article',
                   hintStyle: TextStyle(
                     fontSize: 24,
-                    fontFamily: 'Times New Roman',
+                    fontFamily: 'Merriweather',
                     fontWeight: FontWeight.bold,
                     color: AppColors.textSecondary,
-                    height: 1.1,
+                    height: 1.2,
                   ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
@@ -216,23 +217,25 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
                 textAlignVertical: TextAlignVertical.top,
                 maxLines: null,
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 16),
               // Description input
               TextFormField(
                 controller: _descriptionController,
                 focusNode: _descriptionFocus,
                 style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Merriweather',
                   color: AppColors.textSecondary,
-                  height: 1.1,
+                  height: 1.2,
                 ),
                 decoration: const InputDecoration(
                   hintText: 'Add a description',
                   hintStyle: TextStyle(
                     fontSize: 18,
+                    fontFamily: 'Merriweather',
                     color: AppColors.textSecondary,
-                    height: 1.1,
+                    height: 1.2,
                   ),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.zero,
@@ -256,6 +259,7 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
              style: const TextStyle(
                fontSize: 16,
                color: AppColors.textPrimary,
+               fontFamily: 'Merriweather',
                height: 1.5,
              ),
              decoration: const InputDecoration(

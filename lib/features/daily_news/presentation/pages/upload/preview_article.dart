@@ -129,7 +129,7 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
           const SizedBox(width: 16),
           const Expanded(
             child: Text(
-              'Vista previa',
+              'Preview',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -143,16 +143,29 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
   }
 
   Widget _buildImagePreview() {
-    return AnimatedImagePicker(
-      selectedImage: widget.image,
-      onTap: () {}, // Sin acción en preview
-      enableAnimation: false, // Sin animación en preview
+    return SizedBox(
+      height: 400,
+      width: double.infinity,
+      child: ClipRect(
+        child: Image.file(
+          widget.image,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: AppColors.surface,
+            child: const Icon(
+              Icons.image_not_supported,
+              color: AppColors.textTertiary,
+              size: 80,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildArticlePreview() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -163,53 +176,113 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
-              height: 1.3,
+              fontFamily: 'Merriweather',
+              height: 1.2,
             ),
           ),
+          
+          const SizedBox(height: 16),
+          
+          // Description
+          Text(
+            widget.description,
+            style: const TextStyle(
+              fontSize: 18,
+              color: AppColors.textSecondary,
+              fontFamily: 'Merriweather',
+              height: 1.2,
+            ),
+          ),
+          
           const SizedBox(height: 8),
-          // Author and reading time info
+          
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+            child: Divider(height: 1, color: AppColors.borderLight),
+          ),
+          
+          const SizedBox(height: 4),
+          
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Por David',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-                width: 4,
-                height: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.textSecondary,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              FutureBuilder<int>(
-                future: _calculateReadingTime(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    return Text(
-                      '${snapshot.data} min de lectura',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    );
-                  }
-                  return const Text(
-                    'Calculando...',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
+              Expanded(
+                flex: 1,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.newspaper,
+                      color: AppColors.accent,
+                      size: 12,
                     ),
-                  );
-                },
+                    const SizedBox(width: 4),
+                    const Expanded(
+                      child: Text(
+                        'DNews',
+                        style: TextStyle(
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Flexible(
+                      child: Text(
+                        'By David',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      width: 4,
+                      height: 4,
+                      decoration: const BoxDecoration(
+                        color: AppColors.textSecondary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    FutureBuilder<int>(
+                      future: _calculateReadingTime(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return Text(
+                            '${snapshot.data} min read',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          );
+                        }
+                        return const Text(
+                          'Calculando...',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          
           const SizedBox(height: 24),
+          
           // Content
           MarkdownBody(
             data: widget.content,
@@ -217,38 +290,44 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
               p: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
+                fontFamily: 'Merriweather',
                 height: 1.6,
               ),
               h1: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Merriweather',
                 height: 1.3,
               ),
               h2: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Merriweather',
                 height: 1.3,
               ),
               h3: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Merriweather',
                 height: 1.3,
               ),
               strong: const TextStyle(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Merriweather',
               ),
               em: const TextStyle(
                 color: AppColors.textPrimary,
                 fontStyle: FontStyle.italic,
+                fontFamily: 'Merriweather',
               ),
               code: TextStyle(
                 backgroundColor: AppColors.surface,
                 color: AppColors.textPrimary,
-                fontFamily: 'monospace',
+                fontFamily: 'Merriweather',
                 fontSize: 14,
               ),
               codeblockDecoration: BoxDecoration(
@@ -258,6 +337,7 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
               blockquote: TextStyle(
                 color: AppColors.textSecondary,
                 fontStyle: FontStyle.italic,
+                fontFamily: 'Merriweather',
               ),
               blockquoteDecoration: BoxDecoration(
                 border: Border(
@@ -269,6 +349,7 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
               ),
             ),
           ),
+          
           const SizedBox(height: 32),
         ],
       ),
@@ -338,18 +419,28 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
     });
 
     try {
+      print('Iniciando proceso de subida del artículo...');
+      
       // Subir imagen a Firebase Storage
       final storageService = sl<FirebaseStorageService>();
       final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      
+      print('Subiendo imagen: $fileName');
       final imageUrl = await storageService.uploadImage(widget.image, fileName);
+      print('Imagen subida exitosamente: $imageUrl');
 
       // Calcular tiempo de lectura
+      print('Calculando tiempo de lectura...');
       final lectureTime = await _calculateReadingTime();
+      print('Tiempo de lectura calculado: $lectureTime minutos');
 
-      // Generar descripción automática desde las primeras líneas del contenido
-      final description = _generateDescription(widget.content);
+      // Usar la descripción proporcionada por el usuario
+      print('Usando descripción del usuario...');
+      final description = widget.description;
+      print('Descripción del usuario: $description');
 
       // Crear artículo con la URL de la imagen subida
+      print('Creando entidad del artículo...');
       final article = ArticleEntity(
         title: widget.title.trim(),
         author: 'David',
@@ -360,9 +451,16 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
         source: 'DNews',
         lectureTime: lectureTime,
       );
+      
+      print('Artículo creado con source: ${article.source} y lectureTime: ${article.lectureTime}');
 
+      // Enviar evento al bloc
+      print('Enviando evento UploadArticle al bloc...');
       context.read<UploadArticleBloc>().add(UploadArticle(article: article));
+      
+      print('Proceso de subida completado exitosamente');
     } catch (e) {
+      print('Error durante la subida: $e');
       setState(() {
         _isUploadingImage = false;
       });
@@ -376,26 +474,5 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
     }
   }
 
-  String _generateDescription(String content) {
-    // Remover markdown básico para la descripción
-    String cleanContent = content
-        .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // negrita
-        .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // cursiva
-        .replaceAll(RegExp(r'`(.*?)`'), r'$1') // código
-        .replaceAll(RegExp(r'\[(.*?)\]\(.*?\)'), r'$1') // enlaces
-        .replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '') // headers
-        .replaceAll(RegExp(r'\n{2,}'), ' ') // múltiples saltos de línea
-        .trim();
 
-    // Tomar las primeras 150 caracteres aproximadamente
-    if (cleanContent.length <= 150) {
-      return cleanContent;
-    }
-
-    // Buscar el último espacio antes del límite para no cortar palabras
-    final cutIndex = cleanContent.lastIndexOf(' ', 147);
-    return cutIndex != -1 
-        ? '${cleanContent.substring(0, cutIndex)}...'
-        : '${cleanContent.substring(0, 147)}...';
-  }
 }

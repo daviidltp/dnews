@@ -94,18 +94,43 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
-  # fonts:
-  #   - family: Inter
-  #     fonts:
-  #       - asset: fonts/Inter-Regular.ttf
-  #       - asset: fonts/Inter-Italic.ttf
-  #         style: italic
-  #       - asset: fonts/Inter-Bold.ttf
-  #         weight: 700
-  #       - asset: fonts/Inter-Medium.ttf
-  #         weight: 500
-  #       - asset: fonts/Inter-SemiBold.ttf
-  #         weight: 600
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter/Inter-Regular.ttf
+        - asset: assets/fonts/inter/Inter-Italic.ttf
+          style: italic
+        - asset: assets/fonts/inter/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/inter/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/inter/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/inter/Inter-Light.ttf
+          weight: 300
+        - asset: assets/fonts/inter/Inter-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/inter/Inter-Black.ttf
+          weight: 900
+        - asset: assets/fonts/inter/Inter-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/inter/Inter-ExtraBold.ttf
+          weight: 800
+    - family: Merriweather
+      fonts:
+        - asset: assets/fonts/Merriweather/Merriweather-Regular.ttf
+        - asset: assets/fonts/Merriweather/Merriweather-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Merriweather/Merriweather-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Merriweather/Merriweather-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Merriweather/Merriweather-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Merriweather/Merriweather-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Merriweather/Merriweather-Black.ttf
+          weight: 900
   
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

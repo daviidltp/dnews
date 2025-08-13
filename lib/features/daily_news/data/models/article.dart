@@ -13,34 +13,48 @@ class ArticleModel extends ArticleEntity {
     super.content,
     super.source,
     super.lectureTime,
+    super.category,
   });
 
-  factory ArticleModel.fromJson(Map<String, dynamic> json) {
+  factory ArticleModel.fromJson(Map<String, dynamic> json, [ArticleCategory? category]) {
     return ArticleModel(
-      author: json['author'] ?? '',
-      title: json['title'] ?? '',
+      author: json['author'] ?? 'Anonymous',
+      title: _cleanTitle(json['title'] ?? ''),
       description: json['description'] ?? '',
       url: json['url'] ?? '',
       urlToImage: json['urlToImage'] ?? '',
       publishedAt: json['publishedAt'] ?? '',
       content: json['content'] ?? '',
       source: json['source']['name'] ?? '',
+      lectureTime: 0, // Se calculará después en el repositorio
+      category: category ?? ArticleCategory.general,
     );
+  }
+
+  // Método para limpiar el título eliminando el sufijo del periódico
+  static String _cleanTitle(String title) {
+    if (title.isEmpty) return title;
+    
+    // Buscar el patrón " - {periódico}" al final del título
+    final RegExp pattern = RegExp(r'\s*-\s*[^-]+$');
+    
+    return title.replaceFirst(pattern, '').trim();
   }
 
   factory ArticleModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return ArticleModel(
       id: _parseToInt(data['id']) ?? 0,
-      author: data['author']?.toString() ?? '',
+      author: data['author']?.toString() ?? 'Anonymous',
       title: data['title']?.toString() ?? '',
       description: data['description']?.toString() ?? '',
       url: data['url']?.toString() ?? '',
-      urlToImage: data['thumbnailURL']?.toString() ?? '',
+      urlToImage: data['urlToImage']?.toString() ?? data['thumbnailURL']?.toString() ?? '',
       publishedAt: data['publishedAt']?.toString() ?? '',
       content: data['content']?.toString() ?? '',
       source: data['source']?.toString() ?? '',
       lectureTime: _parseToInt(data['lectureTime']) ?? 0,
+      category: ArticleCategory.dnews, // Los artículos de Firebase siempre son DNews
     );
   }
 
@@ -62,11 +76,12 @@ class ArticleModel extends ArticleEntity {
       'title': title,
       'description': description,
       'url': url,
-      'thumbnailURL': urlToImage,
+      'urlToImage': urlToImage,
       'publishedAt': publishedAt,
       'content': content,
       'source': source,
       'lectureTime': lectureTime,
+      'category': category.apiValue,
     };
   }
 }

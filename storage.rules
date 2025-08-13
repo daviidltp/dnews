@@ -9,8 +9,11 @@ service firebase.storage {
       allow read: if true;
       
       // Permitir escritura a todos los usuarios (para subir imágenes)
-      // En producción, deberías restringir esto a usuarios autenticados
-      allow write: if true;
+      // Con validaciones básicas de seguridad
+      allow write: if 
+        request.resource.size < 10 * 1024 * 1024 && // Máximo 10MB
+        request.resource.contentType.matches('image/.*') && // Solo imágenes
+        request.resource.name.matches('article_.*\\.jpg'); // Solo archivos de artículos
     }
     
     // Denegar acceso a cualquier otra ruta por defecto

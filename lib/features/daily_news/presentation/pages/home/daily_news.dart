@@ -6,9 +6,10 @@ import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/widgets/article_tile.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/widgets/featured_article_tile.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/widgets/sticky_category_buttons.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/pages/upload/upload_article.dart';
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
-import 'package:symmetry_showcase/features/daily_news/presentation/cubit/button_selection_cubit.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/cubit/category_selection_cubit.dart';
 
 class DailyNews extends StatelessWidget {
   const DailyNews({super.key});
@@ -16,9 +17,12 @@ class DailyNews extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ButtonSelectionCubit(),
+      create: (context) => CategorySelectionCubit(),
       child: Scaffold(
-        body: _buildBody(),
+        backgroundColor: AppColors.background,
+        body: SafeArea(
+          child: _buildBody(),
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _navigateToUpload(context),
           backgroundColor: AppColors.textPrimary,
@@ -32,7 +36,8 @@ class DailyNews extends StatelessWidget {
 
   Widget _buildCustomHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(32, 20, 32, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,13 +47,13 @@ class DailyNews extends StatelessWidget {
             children: [
               // Logo con manejo de errores robusto
               Container(
-                height: 30,
-                width: 30,
+                height: 50,
+                width: 50,
                 child: Builder(
                   builder: (context) {
                     try {
                       return Image.asset(
-                        'assets/images/logo_upscaled.png',
+                        'assets/images/logo_extended.png',
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -98,7 +103,7 @@ class DailyNews extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8), // Espacio entre logo y header
+          const SizedBox(height: 24), // Espacio entre logo y header
           Text(
             _getGreeting(),
             style: const TextStyle(
@@ -117,38 +122,9 @@ class DailyNews extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 24), // Espacio entre fecha y botones
-          BlocBuilder<ButtonSelectionCubit, int>(
-            builder: (context, selectedIndex) {
-              return Wrap(
-                spacing: 8, // Reducir el gap horizontal entre botones
-                runSpacing: 8, // Gap vertical si hay wrap
-                alignment: WrapAlignment.start, // Alinear a la izquierda
-                children: [
-                  _buildSelectionButton(
-                    context: context,
-                    text: 'General',
-                    index: 0,
-                    isSelected: selectedIndex == 0,
-                  ),
-                  _buildSelectionButton(
-                    context: context,
-                    text: 'Business',
-                    index: 1,
-                    isSelected: selectedIndex == 1,
-                  ),
-                  _buildSelectionButton(
-                    context: context,
-                    text: 'Sports',
-                    index: 2,
-                    isSelected: selectedIndex == 2,
-                  ),
-                  
-                ],
-              );
-            },
-          ),
+          const SizedBox(height: 12),
         ],
+        
       ),
     );
   }
@@ -176,51 +152,21 @@ class DailyNews extends StatelessWidget {
     }
   }
 
-  Widget _buildSelectionButton({
-    required BuildContext context,
-    required String text,
-    required int index,
-    required bool isSelected,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        context.read<ButtonSelectionCubit>().selectButton(index);
-      },
-      child: Container(
-        height: 34,
-        width: 90,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.black : Colors.white,
-          border: Border.all(
-            color: Colors.black,
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(60),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildBody() {
     return BlocBuilder<RemoteArticlesBloc, RemoteArticlesState>(
       builder: (context, state) {
+        // Solo mostrar loading completo si no hay artículos previos
         if (state is RemoteArticlesLoading) {
           return const Center(
             child: CircularProgressIndicator(),
           );
         }
+        
+        // Para RemoteArticlesDone, mostrar contenido
         if (state is RemoteArticlesDone) {
-          final articles = state.articles ?? [];
+          final articles = state.filteredArticles ?? [];
           if (articles.isEmpty) {
             return Center(
               child: Column(
@@ -234,55 +180,60 @@ class DailyNews extends StatelessWidget {
             );
           }
           
-          return ListView.builder(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top,
-            ),
-            itemCount: articles.length + 1, // +1 para el header
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                // Header como primer elemento
-                return _buildCustomHeader(context);
-              } else if (index == 1) {
-                // Primera noticia en formato destacado
-                return Column(
-                  children: [
-                    FeaturedArticleTile(article: articles[index - 1]),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), 
-                      child: Divider(height: 1, color: AppColors.borderLight),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 24, top: 16),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Top headlines',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
+          return CustomScrollView(
+            slivers: [
+              // Header como SliverToBoxAdapter
+              SliverToBoxAdapter(
+                child: _buildCustomHeader(context),
+              ),
+              // Botones sticky
+              const StickyCategoryButtons(),
+              // Lista de artículos
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (index == 0) {
+                      // Primera noticia en formato destacado
+                      return Column(
+                        children: [
+                          FeaturedArticleTile(article: articles[index]),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), 
+                            child: Divider(height: 1, color: AppColors.borderLight),
                           ),
-                        ),
-                      ),
-                      
-                    ),
-                    
-                  ],
-                );
-              } else {
-                // Resto de noticias en formato normal
-                return Column(
-                  children: [
-                    ArticleTile(article: articles[index - 1]),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16), 
-                      child: Divider(height: 1, color: AppColors.borderLight),
-                    ),
-                  ],
-                );
-              }
-            },
+                          const Padding(
+                            padding: EdgeInsets.only(left: 24, top: 16),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Top headlines',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      // Resto de noticias en formato normal
+                      return Column(
+                        children: [
+                          ArticleTile(article: articles[index]),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16), 
+                            child: Divider(height: 1, color: AppColors.borderLight),
+                          ),
+                        ],
+                      );
+                    }
+                  },
+                  childCount: articles.length,
+                ),
+              ),
+            ],
           );
         }
         return Center(

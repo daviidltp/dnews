@@ -8,7 +8,8 @@ class CalculateLectureTime implements UseCase<int, CalculateLectureTimeParams> {
     }
     
     // Promedio de palabras por minuto de lectura: 200-250 palabras
-    const int wordsPerMinute = 225;
+    // Usamos 200 para ser más conservadores y dar tiempo suficiente
+    const int wordsPerMinute = 200;
     
     // Contar palabras en el contenido
     final words = _countWords(params.content);
@@ -23,37 +24,27 @@ class CalculateLectureTime implements UseCase<int, CalculateLectureTimeParams> {
   int _countWords(String text) {
     if (text.isEmpty) return 0;
     
-    // Extraer caracteres adicionales del formato [+XXXX chars] si existe
-    int additionalChars = _extractAdditionalChars(text);
-    
-    // Limpiar el texto removiendo el patrón [+XXXX chars] si existe
-    String cleanedText = text.replaceAll(RegExp(r'\s*…\s*\[\+\d+\s+chars\]$'), '');
-    
-    // Limpiar el texto y dividir por espacios en blanco
-    final processedText = cleanedText
+    // Limpiar el texto removiendo markdown y caracteres especiales
+    String cleanedText = text
+        .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // negrita
+        .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // cursiva
+        .replaceAll(RegExp(r'`(.*?)`'), r'$1') // código
+        .replaceAll(RegExp(r'\[(.*?)\]\(.*?\)'), r'$1') // enlaces
+        .replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '') // headers
+        .replaceAll(RegExp(r'\n{2,}'), ' ') // múltiples saltos de línea
         .replaceAll(RegExp(r'[^\w\s]'), ' ') // Reemplazar puntuación con espacios
         .replaceAll(RegExp(r'\s+'), ' ') // Normalizar espacios múltiples
         .trim();
     
-    if (processedText.isEmpty && additionalChars == 0) return 0;
+    if (cleanedText.isEmpty) return 0;
     
-    // Contar palabras del texto visible
-    int visibleWords = processedText.isEmpty ? 0 : processedText.split(' ').length;
+    // Contar palabras dividiendo por espacios
+    final words = cleanedText.split(' ').where((word) => word.isNotEmpty).length;
     
-    // Convertir caracteres adicionales a palabras aproximadas (promedio 5 caracteres por palabra)
-    int additionalWords = (additionalChars / 5).round();
-    
-    return visibleWords + additionalWords;
+    return words;
   }
   
-  int _extractAdditionalChars(String text) {
-    // Buscar el patrón [+XXXX chars] al final del texto
-    final match = RegExp(r'\[\+(\d+)\s+chars\]$').firstMatch(text);
-    if (match != null) {
-      return int.tryParse(match.group(1) ?? '0') ?? 0;
-    }
-    return 0;
-  }
+
 }
 
 class CalculateLectureTimeParams {

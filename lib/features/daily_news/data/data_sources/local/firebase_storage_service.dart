@@ -15,24 +15,43 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
   @override
   Future<String> uploadImage(File imageFile, String fileName) async {
     try {
+      print('Iniciando subida de imagen: $fileName');
+      
       // Crear una referencia única para el archivo
       final ref = _storage.ref().child(_imagesPath).child(fileName);
       
-      // Subir el archivo con timeout
-      final uploadTask = ref.putFile(imageFile);
+      // Configurar metadata para optimizar la subida
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        cacheControl: 'public, max-age=31536000', // 1 año de cache
+      );
+      
+      // Subir el archivo con metadata y timeout reducido
+      final uploadTask = ref.putFile(imageFile, metadata);
+      
+      // Mostrar progreso de la subida
+      uploadTask.snapshotEvents.listen((snapshot) {
+        final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        print('Progreso de subida: ${progress.toStringAsFixed(1)}%');
+      });
+      
       final snapshot = await uploadTask.timeout(
-        const Duration(minutes: 2),
+        const Duration(minutes: 1), // Reducir timeout a 1 minuto
         onTimeout: () {
           uploadTask.cancel();
-          throw Exception('Timeout: La subida de imagen tardó más de 2 minutos');
+          throw Exception('Timeout: La subida de imagen tardó más de 1 minuto');
         },
       );
+      
+      print('Imagen subida exitosamente, obteniendo URL...');
       
       // Obtener la URL de descarga
       final downloadUrl = await snapshot.ref.getDownloadURL();
       
+      print('URL de descarga obtenida: $downloadUrl');
       return downloadUrl;
     } catch (e) {
+      print('Error en Firebase Storage: $e');
       throw Exception('Error al subir imagen: $e');
     }
   }

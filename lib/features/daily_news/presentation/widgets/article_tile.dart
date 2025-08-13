@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/entities/article.dart';
 import '../../../../config/theme/app_themes.dart';
+import '../pages/article_view/article_view.dart';
 
 class ArticleTile extends StatelessWidget {
   final ArticleEntity article;
@@ -18,21 +20,26 @@ class ArticleTile extends StatelessWidget {
     return Container(
       height: 180, // Altura fija para consistencia
       margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Imagen del artículo
-              _buildArticleImage(context),
-              const SizedBox(width: 16),
-              // Contenido del artículo
-              Expanded(
-                child: _buildArticleContent(context),
-              ),
-            ],
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap ?? () => _navigateToArticleView(context),
+          splashColor: AppColors.primary.withOpacity(0.1),
+          highlightColor: AppColors.primary.withOpacity(0.05),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Imagen del artículo
+                _buildArticleImage(context),
+                const SizedBox(width: 16),
+                // Contenido del artículo
+                Expanded(
+                  child: _buildArticleContent(context),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -44,23 +51,26 @@ class ArticleTile extends StatelessWidget {
       width: 130,
       height: 150,
       child: article.urlToImage != null && article.urlToImage!.isNotEmpty
-          ? CachedNetworkImage(
-              imageUrl: article.urlToImage!,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[300],
-                child: const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
+          ? Hero(
+              tag: 'article_image_${article.id ?? article.title ?? article.urlToImage}',
+              child: CachedNetworkImage(
+                imageUrl: article.urlToImage!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                    ),
                   ),
                 ),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[300],
-                child: const Icon(
-                  Icons.image_not_supported,
-                  color: Colors.grey,
-                  size: 50,
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[300],
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    color: Colors.grey,
+                    size: 50,
+                  ),
                 ),
               ),
             )
@@ -87,7 +97,7 @@ class ArticleTile extends StatelessWidget {
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              fontFamily: 'Times New Roman',
+              fontFamily: 'Merriweather',
               color: AppColors.textPrimary,
               height: 1.3,
             ),
@@ -103,7 +113,7 @@ class ArticleTile extends StatelessWidget {
             article.description!,
             style: const TextStyle(
               fontSize: 16,
-              fontFamily: 'Times New Roman',
+              fontFamily: 'Merriweather',
               color: AppColors.textSecondary,
               height: 1.4,
             ),
@@ -136,18 +146,18 @@ class ArticleTile extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                   Icon(
                     Icons.newspaper,
                     size: 14,
-                    color: AppColors.textSecondary,
+                    color: source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       source,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -237,5 +247,13 @@ class ArticleTile extends StatelessWidget {
       return int.tryParse(match.group(1) ?? '0') ?? 0;
     }
     return 0;
+  }
+
+  void _navigateToArticleView(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ArticleViewPage(article: article),
+      ),
+    );
   }
 }
