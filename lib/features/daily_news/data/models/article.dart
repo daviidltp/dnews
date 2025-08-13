@@ -14,6 +14,7 @@ class ArticleModel extends ArticleEntity {
     super.source,
     super.lectureTime,
     super.category,
+    super.saved,
   });
 
   factory ArticleModel.fromJson(Map<String, dynamic> json, [ArticleCategory? category]) {
@@ -28,6 +29,7 @@ class ArticleModel extends ArticleEntity {
       source: json['source']['name'] ?? '',
       lectureTime: 0, // Se calculará después en el repositorio
       category: category ?? ArticleCategory.general,
+      saved: false, // Los artículos de API no están guardados por defecto
     );
   }
 
@@ -55,6 +57,7 @@ class ArticleModel extends ArticleEntity {
       source: data['source']?.toString() ?? '',
       lectureTime: _parseToInt(data['lectureTime']) ?? 0,
       category: ArticleCategory.dnews, // Los artículos de Firebase siempre son DNews
+      saved: data['saved'] == true, // Lee el estado guardado desde Firebase
     );
   }
 
@@ -82,6 +85,7 @@ class ArticleModel extends ArticleEntity {
       'source': source,
       'lectureTime': lectureTime,
       'category': category.apiValue,
+      'saved': saved,
     };
   }
 }

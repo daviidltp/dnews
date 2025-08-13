@@ -12,9 +12,15 @@ import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_articl
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_firebase_articles.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/upload_article.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/calculate_lecture_time.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/usecases/save_article.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/usecases/remove_saved_article.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/usecases/get_saved_articles.dart';
+import 'package:symmetry_showcase/features/daily_news/domain/usecases/check_article_saved_status.dart';
 import 'package:dio/dio.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/bookmark/bookmark_article_bloc.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/saved_articles/saved_articles_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -50,7 +56,21 @@ Future<void> init() async {
   // Use cases - Upload article (needs ArticleRepository)
   sl.registerSingleton<UploadArticleUseCase>(UploadArticleUseCase(sl()));
 
+  // Use cases - Save article (needs ArticleRepository)
+  sl.registerSingleton<SaveArticleUseCase>(SaveArticleUseCase(sl()));
+
+  // Use cases - Remove saved article (needs ArticleRepository)
+  sl.registerSingleton<RemoveSavedArticleUseCase>(RemoveSavedArticleUseCase(sl()));
+
+  // Use cases - Get saved articles (needs ArticleRepository)
+  sl.registerSingleton<GetSavedArticlesUseCase>(GetSavedArticlesUseCase(sl()));
+
+  // Use cases - Check article saved status (needs ArticleRepository)
+  sl.registerSingleton<CheckArticleSavedStatusUseCase>(CheckArticleSavedStatusUseCase(sl()));
+
   // Bloc
   sl.registerFactory<RemoteArticlesBloc>(() => RemoteArticlesBloc(sl()));
   sl.registerFactory<UploadArticleBloc>(() => UploadArticleBloc(sl()));
+  sl.registerFactory<BookmarkArticleBloc>(() => BookmarkArticleBloc(sl(), sl(), sl()));
+  sl.registerFactory<SavedArticlesBloc>(() => SavedArticlesBloc(sl()));
 }

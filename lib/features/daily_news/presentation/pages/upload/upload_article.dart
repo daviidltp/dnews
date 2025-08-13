@@ -193,6 +193,7 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
               TextFormField(
                 controller: _titleController,
                 focusNode: _titleFocus,
+                maxLength: 100,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -213,6 +214,7 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
                   contentPadding: EdgeInsets.zero,
                   alignLabelWithHint: true,
                   isCollapsed: true,
+                  counterText: '',
                 ),
                 textAlignVertical: TextAlignVertical.top,
                 maxLines: null,
@@ -222,6 +224,7 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
               TextFormField(
                 controller: _descriptionController,
                 focusNode: _descriptionFocus,
+                maxLength: 100,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -241,6 +244,7 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
                   contentPadding: EdgeInsets.zero,
                   alignLabelWithHint: true,
                   isCollapsed: true,
+                  counterText: '',
                 ),
                 textAlignVertical: TextAlignVertical.top,
                 maxLines: null,

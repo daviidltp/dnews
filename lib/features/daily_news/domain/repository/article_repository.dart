@@ -9,5 +9,11 @@ abstract class ArticleRepository {
   Future<DataState<List<ArticleEntity>>> getNewsArticlesByCategories(List<ArticleCategory> categories);
   Future<DataState<List<ArticleEntity>>> getNewsArticlesByCategory(ArticleCategory category);
   Future<DataState<void>> uploadArticle(ArticleEntity article);
+  
+  // Métodos para artículos guardados
+  Future<DataState<void>> saveArticle(ArticleEntity article);
+  Future<DataState<void>> removeSavedArticle(ArticleEntity article);
+  Future<DataState<List<ArticleEntity>>> getSavedArticles();
+  Future<DataState<bool>> isArticleSaved(ArticleEntity article);
 
 }

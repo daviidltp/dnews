@@ -15,7 +15,7 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
   @override
   Future<String> uploadImage(File imageFile, String fileName) async {
     try {
-      print('Iniciando subida de imagen: $fileName');
+
       
       // Crear una referencia única para el archivo
       final ref = _storage.ref().child(_imagesPath).child(fileName);
@@ -32,7 +32,7 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
       // Mostrar progreso de la subida
       uploadTask.snapshotEvents.listen((snapshot) {
         final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        print('Progreso de subida: ${progress.toStringAsFixed(1)}%');
+
       });
       
       final snapshot = await uploadTask.timeout(
@@ -43,15 +43,15 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
         },
       );
       
-      print('Imagen subida exitosamente, obteniendo URL...');
+
       
       // Obtener la URL de descarga
       final downloadUrl = await snapshot.ref.getDownloadURL();
       
-      print('URL de descarga obtenida: $downloadUrl');
+
       return downloadUrl;
     } catch (e) {
-      print('Error en Firebase Storage: $e');
+
       throw Exception('Error al subir imagen: $e');
     }
   }

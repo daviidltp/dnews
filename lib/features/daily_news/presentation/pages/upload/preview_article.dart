@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/usecases/calculate_lecture_time.dart';
@@ -9,8 +8,7 @@ import 'package:symmetry_showcase/features/daily_news/data/data_sources/local/fi
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_event.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_state.dart';
-import 'package:symmetry_showcase/features/daily_news/presentation/widgets/resizing_button.dart';
-import 'package:symmetry_showcase/features/daily_news/presentation/widgets/animated_image_picker.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/widgets/article_markdown_body.dart';
 import 'package:symmetry_showcase/injection_container.dart';
 
 class PreviewArticlePage extends StatefulWidget {
@@ -216,15 +214,29 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
                       size: 12,
                     ),
                     const SizedBox(width: 4),
-                    const Expanded(
-                      child: Text(
-                        'DNews',
-                        style: TextStyle(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'D',
+                              style: TextStyle(
+                                color: AppColors.accent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'News',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -284,70 +296,9 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
           const SizedBox(height: 24),
           
           // Content
-          MarkdownBody(
+          ArticleMarkdownBody(
             data: widget.content,
-            styleSheet: MarkdownStyleSheet(
-              p: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontFamily: 'Merriweather',
-                height: 1.6,
-              ),
-              h1: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Merriweather',
-                height: 1.3,
-              ),
-              h2: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Merriweather',
-                height: 1.3,
-              ),
-              h3: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Merriweather',
-                height: 1.3,
-              ),
-              strong: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Merriweather',
-              ),
-              em: const TextStyle(
-                color: AppColors.textPrimary,
-                fontStyle: FontStyle.italic,
-                fontFamily: 'Merriweather',
-              ),
-              code: TextStyle(
-                backgroundColor: AppColors.surface,
-                color: AppColors.textPrimary,
-                fontFamily: 'Merriweather',
-                fontSize: 14,
-              ),
-              codeblockDecoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              blockquote: TextStyle(
-                color: AppColors.textSecondary,
-                fontStyle: FontStyle.italic,
-                fontFamily: 'Merriweather',
-              ),
-              blockquoteDecoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: AppColors.textPrimary.withOpacity(0.3),
-                    width: 4,
-                  ),
-                ),
-              ),
-            ),
+            blockquoteBorderWidth: 4,
           ),
           
           const SizedBox(height: 32),
@@ -363,43 +314,50 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
         builder: (context, state) {
           final isLoading = state is UploadArticleLoading || _isUploadingImage;
           
-          return ResizingButton(
-            onPressed: isLoading ? null : _submitArticle,
-            backgroundColor: AppColors.textPrimary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            borderRadius: BorderRadius.circular(16),
-            elevation: 2,
-            shadowColor: AppColors.textPrimary.withOpacity(0.3),
-            child: isLoading
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+          return SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            child: ElevatedButton (
+              onPressed: isLoading ? null : _submitArticle,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isLoading 
+                    ? Colors.black.withOpacity(0.7) 
+                    : AppColors.textPrimary,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: isLoading
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _isUploadingImage ? 'Subiendo imagen...' : 'Guardando artículo...',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(width: 12),
+                        Text(
+                          _isUploadingImage ? 'Subiendo post...' : 'Guardando artículo...',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
+                      ],
+                    )
+                  : const Text(
+                      'Publicar Artículo',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  )
-                : const Text(
-                    'Publicar Artículo',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
                     ),
-                  ),
+            ),
           );
         },
       ),
@@ -419,28 +377,28 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
     });
 
     try {
-      print('Iniciando proceso de subida del artículo...');
+
       
       // Subir imagen a Firebase Storage
       final storageService = sl<FirebaseStorageService>();
       final fileName = 'article_${DateTime.now().millisecondsSinceEpoch}.jpg';
       
-      print('Subiendo imagen: $fileName');
+
       final imageUrl = await storageService.uploadImage(widget.image, fileName);
-      print('Imagen subida exitosamente: $imageUrl');
+
 
       // Calcular tiempo de lectura
-      print('Calculando tiempo de lectura...');
+
       final lectureTime = await _calculateReadingTime();
-      print('Tiempo de lectura calculado: $lectureTime minutos');
+
 
       // Usar la descripción proporcionada por el usuario
-      print('Usando descripción del usuario...');
+
       final description = widget.description;
-      print('Descripción del usuario: $description');
+
 
       // Crear artículo con la URL de la imagen subida
-      print('Creando entidad del artículo...');
+
       final article = ArticleEntity(
         title: widget.title.trim(),
         author: 'David',
@@ -452,15 +410,15 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
         lectureTime: lectureTime,
       );
       
-      print('Artículo creado con source: ${article.source} y lectureTime: ${article.lectureTime}');
+
 
       // Enviar evento al bloc
-      print('Enviando evento UploadArticle al bloc...');
+
       context.read<UploadArticleBloc>().add(UploadArticle(article: article));
       
-      print('Proceso de subida completado exitosamente');
+
     } catch (e) {
-      print('Error durante la subida: $e');
+
       setState(() {
         _isUploadingImage = false;
       });

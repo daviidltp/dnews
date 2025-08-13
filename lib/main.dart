@@ -5,8 +5,9 @@ import 'package:symmetry_showcase/config/theme/app_themes.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/upload/upload_article_bloc.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/bookmark/bookmark_article_bloc.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/saved_articles/saved_articles_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/pages/home/daily_news.dart';
-import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
 import 'package:symmetry_showcase/firebase_options.dart';
 import 'package:symmetry_showcase/injection_container.dart' as di;
 import 'package:symmetry_showcase/injection_container.dart';
@@ -49,6 +50,12 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<UploadArticleBloc>(
           create: (context) => sl<UploadArticleBloc>(),
+        ),
+        BlocProvider<BookmarkArticleBloc>(
+          create: (context) => sl<BookmarkArticleBloc>(),
+        ),
+        BlocProvider<SavedArticlesBloc>(
+          create: (context) => sl<SavedArticlesBloc>(),
         ),
       ],
       child: MaterialApp(

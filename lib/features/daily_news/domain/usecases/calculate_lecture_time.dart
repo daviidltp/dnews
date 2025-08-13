@@ -24,8 +24,14 @@ class CalculateLectureTime implements UseCase<int, CalculateLectureTimeParams> {
   int _countWords(String text) {
     if (text.isEmpty) return 0;
     
+    // Extraer caracteres adicionales del formato … [+XXXX chars] si existe
+    int additionalChars = _extractAdditionalChars(text);
+    
+    // Limpiar el texto removiendo el patrón … [+XXXX chars] o ... [+XXXX chars] si existe
+    String cleanedText = text.replaceAll(RegExp(r'(…|\.\.\.)\s*\[\+\d+\s+chars\]'), '');
+    
     // Limpiar el texto removiendo markdown y caracteres especiales
-    String cleanedText = text
+    cleanedText = cleanedText
         .replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1') // negrita
         .replaceAll(RegExp(r'\*(.*?)\*'), r'$1') // cursiva
         .replaceAll(RegExp(r'`(.*?)`'), r'$1') // código
@@ -36,12 +42,25 @@ class CalculateLectureTime implements UseCase<int, CalculateLectureTimeParams> {
         .replaceAll(RegExp(r'\s+'), ' ') // Normalizar espacios múltiples
         .trim();
     
-    if (cleanedText.isEmpty) return 0;
+    if (cleanedText.isEmpty && additionalChars == 0) return 0;
     
-    // Contar palabras dividiendo por espacios
-    final words = cleanedText.split(' ').where((word) => word.isNotEmpty).length;
+    // Contar palabras del texto visible
+    int visibleWords = cleanedText.isEmpty ? 0 : cleanedText.split(' ').where((word) => word.isNotEmpty).length;
     
-    return words;
+    // Convertir caracteres adicionales a palabras aproximadas (promedio 5 caracteres por palabra)
+    int additionalWords = (additionalChars / 5).round();
+    
+    return visibleWords + additionalWords;
+  }
+  
+  int _extractAdditionalChars(String text) {
+    // Buscar el patrón … [+XXXX chars] o ... [+XXXX chars] en el texto
+    final match = RegExp(r'(…|\.\.\.)\s*\[\+(\d+)\s+chars\]').firstMatch(text);
+    if (match != null) {
+      return int.tryParse(match.group(2) ?? '0') ?? 0;
+    }
+    
+    return 0;
   }
   
 

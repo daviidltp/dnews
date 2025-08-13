@@ -49,6 +49,9 @@ dependencies:
   cloud_firestore: ^6.0.0
   firebase_storage: ^13.0.0
   flutter_markdown: ^0.7.4
+  skeletonizer: ^1.4.2
+  flutter_launcher_icons: ^0.14.4
+  rename_app: ^1.6.5
 
 dev_dependencies:
   flutter_test:

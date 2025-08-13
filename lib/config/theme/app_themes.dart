@@ -12,7 +12,7 @@ class AppColors {
   static const Color surface = Color(0xFFF9FAFB); // Grey 50
   static const Color overlay = Color(0x80000000); // Black with 50% opacity
   static const Color borderLight = Color(0xFFE5E7EB); // Grey 200
-  static const Color accent = Color.fromARGB(255, 2, 94, 86); // Blue 600
+  static const Color accent = Color(0xFFFe62525); // Grey 50
 }
 
 ThemeData theme() {

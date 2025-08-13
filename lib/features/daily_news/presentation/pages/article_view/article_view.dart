@@ -1,16 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
 import 'package:symmetry_showcase/features/daily_news/domain/entities/article.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/bookmark/bookmark_article_bloc.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/bookmark/bookmark_article_event.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/bookmark/bookmark_article_state.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/widgets/article_markdown_body.dart';
 
-class ArticleViewPage extends StatelessWidget {
+class ArticleViewPage extends StatefulWidget {
   final ArticleEntity article;
 
   const ArticleViewPage({
     Key? key,
     required this.article,
   }) : super(key: key);
+
+  @override
+  State<ArticleViewPage> createState() => _ArticleViewPageState();
+}
+
+class _ArticleViewPageState extends State<ArticleViewPage> {
+  late bool _isBookmarked;
+
+  @override
+  void initState() {
+    super.initState();
+    _isBookmarked = widget.article.saved;
+
+    
+    // Verificar el estado actual del bookmark después del primer frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Forzar que el BLoC esté en estado inicial antes de la consulta
+      final bloc = context.read<BookmarkArticleBloc>();
+      bloc.add(CheckBookmarkStatus(article: widget.article));
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +68,7 @@ class ArticleViewPage extends StatelessWidget {
 
   Widget _buildCustomAppBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.background,
         border: Border(
@@ -55,6 +80,7 @@ class ArticleViewPage extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // Back button
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -74,16 +100,91 @@ class ArticleViewPage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Text(
-              'Artículo',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
+          const Spacer(),
+          // Bookmark button
+          BlocConsumer<BookmarkArticleBloc, BookmarkArticleState>(
+            listenWhen: (previous, current) {
+              return true; // Escuchar todos los cambios
+            },
+            listener: (context, state) {
+              if (state is BookmarkArticleSaved) {
+                setState(() {
+                  _isBookmarked = true;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Artículo guardado'),
+                    backgroundColor: AppColors.primary,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } else if (state is BookmarkArticleRemoved) {
+                setState(() {
+                  _isBookmarked = false;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Artículo eliminado de guardados'),
+                    backgroundColor: AppColors.textSecondary,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              } else if (state is BookmarkStatusChecked) {
+                setState(() {
+                  _isBookmarked = state.isBookmarked;
+                });
+              } else if (state is BookmarkArticleError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: ${state.error.message}'),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            builder: (context, state) {
+              final isLoading = state is BookmarkArticleLoading;
+              
+              return Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: isLoading ? null : () {
+                    if (_isBookmarked) {
+                      context.read<BookmarkArticleBloc>().add(
+                        RemoveBookmarkArticle(article: widget.article),
+                      );
+                    } else {
+                      context.read<BookmarkArticleBloc>().add(
+                        SaveBookmarkArticle(article: widget.article),
+                      );
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.0,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            ),
+                          )
+                        : Icon(
+                            _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                            color: _isBookmarked ? AppColors.primary : AppColors.textPrimary,
+                            size: 24,
+                          ),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -91,7 +192,7 @@ class ArticleViewPage extends StatelessWidget {
   }
 
   Widget _buildArticleImage() {
-    if (article.urlToImage == null || article.urlToImage!.isEmpty) {
+    if (widget.article.urlToImage == null || widget.article.urlToImage!.isEmpty) {
       return Container(
         height: 350,
         width: double.infinity,
@@ -108,9 +209,9 @@ class ArticleViewPage extends StatelessWidget {
       height: 400,
       width: double.infinity,
       child: Hero(
-        tag: 'article_image_${article.id ?? article.title ?? article.urlToImage}',
+        tag: 'article_image_${widget.article.id ?? widget.article.title ?? widget.article.urlToImage}',
         child: CachedNetworkImage(
-          imageUrl: article.urlToImage!,
+          imageUrl: widget.article.urlToImage!,
           fit: BoxFit.cover,
           placeholder: (context, url) => Container(
             color: AppColors.surface,
@@ -141,9 +242,9 @@ class ArticleViewPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
-          if (article.title != null && article.title!.isNotEmpty)
+          if (widget.article.title != null && widget.article.title!.isNotEmpty)
             Text(
-              article.title!,
+              widget.article.title!,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -156,9 +257,9 @@ class ArticleViewPage extends StatelessWidget {
           const SizedBox(height: 16),
           
           // Description
-          if (article.description != null && article.description!.isNotEmpty)
+          if (widget.article.description != null && widget.article.description!.isNotEmpty)
             Text(
-              article.description!,
+              widget.article.description!,
               style: const TextStyle(
                 fontSize: 18,
                 color: AppColors.textSecondary,
@@ -185,20 +286,44 @@ class ArticleViewPage extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.newspaper,
-                      color: article.source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
+                      color: widget.article.source == 'DNews' ? AppColors.textPrimary : AppColors.textSecondary,
                       size: 12,
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text(
-                        article.source ?? 'Anónimo',
-                        style: TextStyle(
-                          color:  article.source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
+                      child: widget.article.source == 'DNews' 
+                        ? RichText(
+                            text: const TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'D',
+                                  style: TextStyle(
+                                    color: AppColors.accent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'News',
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : Text(
+                            widget.article.source ?? 'Anónimo',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                     ),
                   ],
                 ),
@@ -210,7 +335,7 @@ class ArticleViewPage extends StatelessWidget {
                   children: [
                     Flexible(
                       child: Text(
-                        'By ${article.author ?? 'Anónimo'}',
+                        'By ${widget.article.author ?? 'Anónimo'}',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -228,7 +353,7 @@ class ArticleViewPage extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${article.lectureTime} min read',
+                      '${widget.article.lectureTime} min read',
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -245,71 +370,9 @@ class ArticleViewPage extends StatelessWidget {
           const SizedBox(height: 24),
           
           // Content
-          if (article.content != null && article.content!.isNotEmpty)
-            MarkdownBody(
-              data: article.content!,
-              styleSheet: MarkdownStyleSheet(
-                p: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontFamily: 'Merriweather',
-                  height: 1.6,
-                ),
-                h1: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Merriweather',
-                  height: 1.3,
-                ),
-                h2: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Merriweather',
-                  height: 1.3,
-                ),
-                h3: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Merriweather',
-                  height: 1.3,
-                ),
-                strong: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Merriweather',
-                ),
-                em: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontStyle: FontStyle.italic,
-                  fontFamily: 'Merriweather',
-                ),
-                code: TextStyle(
-                  backgroundColor: AppColors.surface,
-                  color: AppColors.textPrimary,
-                  fontFamily: 'Merriweather',
-                  fontSize: 14,
-                ),
-                codeblockDecoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                blockquote: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                  fontFamily: 'Merriweather',
-                ),
-                blockquoteDecoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: AppColors.textPrimary.withOpacity(0.3),
-                      width: 4,
-                    ),
-                  ),
-                ),
-              ),
+          if (widget.article.content != null && widget.article.content!.isNotEmpty)
+            ArticleMarkdownBody(
+              data: widget.article.content!,
             ),
           
           const SizedBox(height: 32),

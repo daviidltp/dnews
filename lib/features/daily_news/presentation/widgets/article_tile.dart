@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../domain/entities/article.dart';
 import '../../../../config/theme/app_themes.dart';
 import '../pages/article_view/article_view.dart';
@@ -8,11 +9,13 @@ import '../pages/article_view/article_view.dart';
 class ArticleTile extends StatelessWidget {
   final ArticleEntity article;
   final VoidCallback? onTap;
+  final bool enableHero;
 
   const ArticleTile({
     Key? key,
     required this.article,
     this.onTap,
+    this.enableHero = true,
   }) : super(key: key);
 
   @override
@@ -47,43 +50,46 @@ class ArticleTile extends StatelessWidget {
   }
 
   Widget _buildArticleImage(BuildContext context) {
-    return SizedBox(
-      width: 130,
-      height: 150,
-      child: article.urlToImage != null && article.urlToImage!.isNotEmpty
-          ? Hero(
-              tag: 'article_image_${article.id ?? article.title ?? article.urlToImage}',
-              child: CachedNetworkImage(
-                imageUrl: article.urlToImage!,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.grey[300],
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[300],
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.grey,
-                    size: 50,
-                  ),
-                ),
+    final imageWidget = article.urlToImage != null && article.urlToImage!.isNotEmpty
+        ? CachedNetworkImage(
+            imageUrl: article.urlToImage!,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Skeletonizer(
+              enabled: true,
+              child: Container(
+                color: Colors.grey[300],
+                width: double.infinity,
+                height: double.infinity,
               ),
-            )
-          : Container(
+            ),
+            errorWidget: (context, url, error) => Container(
               color: Colors.grey[300],
               child: const Icon(
-                Icons.article,
+                Icons.image_not_supported,
                 color: Colors.grey,
                 size: 50,
               ),
             ),
-      );
-    
+          )
+        : Container(
+            color: Colors.grey[300],
+            child: const Icon(
+              Icons.article,
+              color: Colors.grey,
+              size: 50,
+            ),
+          );
+
+    return SizedBox(
+      width: 130,
+      height: 150,
+      child: enableHero && article.urlToImage != null && article.urlToImage!.isNotEmpty
+          ? Hero(
+              tag: 'article_image_${article.id ?? article.title ?? article.urlToImage}',
+              child: imageWidget,
+            )
+          : imageWidget,
+    );
   }
 
   Widget _buildArticleContent(BuildContext context) {
@@ -132,7 +138,6 @@ class ArticleTile extends StatelessWidget {
   Widget _buildBottomInfo() {
     final content = (article.content ?? article.description ?? '');
     final readingTime = _calculateReadingTime(content);
-    final source = article.source?.isNotEmpty == true ? article.source! : 'Anónimo';
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,31 +145,48 @@ class ArticleTile extends StatelessWidget {
       children: [
         Row(
           children: [
+            Icon(
+              Icons.newspaper,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
             // Sección del source - ocupa exactamente el 70% del espacio disponible
             Expanded(
               flex: 7,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                   Icon(
-                    Icons.newspaper,
-                    size: 14,
-                    color: source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      source,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
-                      ),
+              child: article.source == 'DNews'
+                ? RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'D',
+                          style: TextStyle(
+                            color: AppColors.accent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'News',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : Text(
+                    article.source ?? 'Anónimo',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                       overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
                     ),
                   ),
-                ],
-              ),
             ),
             const SizedBox(width: 8), // Pequeño espaciado entre las dos secciones
             // Sección del tiempo de lectura - ocupa exactamente el 30% del espacio disponible
@@ -182,7 +204,7 @@ class ArticleTile extends StatelessWidget {
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
-                      '${readingTime} min',
+                      '${article.lectureTime ?? _calculateReadingTime(content)} min',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,

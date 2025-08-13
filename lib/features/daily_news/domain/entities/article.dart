@@ -76,6 +76,7 @@ class ArticleEntity extends Equatable {
   final String ? source;
   final int ? lectureTime; // Tiempo de lectura en minutos
   final ArticleCategory category; // Propiedad para categoría
+  final bool saved; // Indica si el artículo está guardado
 
   const ArticleEntity({
     this.id,
@@ -89,8 +90,9 @@ class ArticleEntity extends Equatable {
     this.source,
     this.lectureTime,
     this.category = ArticleCategory.general, // Valor por defecto
+    this.saved = false, // Valor por defecto
   });
 
   @override
-  List<Object?> get props => [id, author, title, description, url, urlToImage, publishedAt, content, source, lectureTime, category];
+  List<Object?> get props => [id, author, title, description, url, urlToImage, publishedAt, content, source, lectureTime, category, saved];
 }

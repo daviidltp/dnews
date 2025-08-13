@@ -58,10 +58,47 @@ class ArticleRepositoryImpl implements ArticleRepository {
   Future<List<ArticleEntity>> _getArticlesFromFirestore() async {
     try {
       final firestoreArticles = await _firestoreService.getArticles();
-      print('Firebase articles obtained: ${firestoreArticles.length}');
-      return firestoreArticles.cast<ArticleEntity>();
+
+      
+      // Procesar artículos para asegurar que tengan lectureTime calculado
+      final processedArticles = <ArticleEntity>[];
+      
+      for (final article in firestoreArticles) {
+        if (article.lectureTime == null || article.lectureTime == 0) {
+          // Calcular tiempo de lectura si no existe o es 0
+          // Para artículos de Firebase, usar contenido + descripción si el contenido está vacío
+          final content = (article.content?.isNotEmpty == true) 
+              ? article.content! 
+              : '${article.content ?? ''} ${article.description ?? ''}';
+          final lectureTime = await _calculateLectureTime.call(
+            CalculateLectureTimeParams(content: content),
+          );
+          
+          // Crear nueva instancia con tiempo calculado
+          final updatedArticle = ArticleModel(
+            id: article.id,
+            author: article.author,
+            title: article.title,
+            description: article.description,
+            url: article.url,
+            urlToImage: article.urlToImage,
+            publishedAt: article.publishedAt,
+            content: article.content,
+            source: article.source,
+            lectureTime: lectureTime,
+            category: article.category,
+            saved: article.saved,
+          );
+          processedArticles.add(updatedArticle);
+        } else {
+          // El artículo ya tiene tiempo de lectura válido
+          processedArticles.add(article);
+        }
+      }
+      
+      return processedArticles.cast<ArticleEntity>();
     } catch (e) {
-      print('Error getting Firebase articles: $e');
+
       // Si hay error en Firestore, devolver lista vacía para continuar con la API
       return [];
     }
@@ -76,7 +113,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
         final category = ArticleCategoryExtension.fromString(categoryName);
         return await _getArticlesFromApiByCategory(category);
       } catch (e) {
-        print('Error getting articles for category $categoryName: $e');
+
         return <ArticleEntity>[];
       }
     });
@@ -107,9 +144,11 @@ class ArticleRepositoryImpl implements ArticleRepository {
         final articleMap = articleJson as Map<String, dynamic>;
         final articleModel = ArticleModel.fromJson(articleMap, category);
         
-        // Calcular tiempo de lectura basado en el contenido
+        // Calcular tiempo de lectura basado en el contenido (que ya incluye el patrón [+XXXX chars])
+        final content = articleModel.content ?? '';
+        
         final lectureTime = await _calculateLectureTime.call(
-          CalculateLectureTimeParams(content: articleModel.content ?? ''),
+          CalculateLectureTimeParams(content: content),
         );
         
         // Crear una nueva instancia con el tiempo de lectura calculado
@@ -125,6 +164,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
           source: articleModel.source,
           lectureTime: lectureTime,
           category: category,
+          saved: false, // Los artículos de API no están guardados por defecto
         );
         
         articles.add(articleWithLectureTime);
@@ -147,15 +187,24 @@ class ArticleRepositoryImpl implements ArticleRepository {
     List<ArticleEntity> firestoreArticles, 
     List<ArticleEntity> apiArticles,
   ) {
-    // Simplemente combinar ambas listas sin evitar duplicados
-    // ya que mantenemos las fuentes completamente separadas
     final combinedList = <ArticleEntity>[];
+    final urlsFromFirestore = <String>{};
     
-    // Agregar todos los artículos de Firebase primero
-    combinedList.addAll(firestoreArticles);
+    // Agregar todos los artículos de Firebase primero (ya tienen el estado saved correcto)
+    for (final article in firestoreArticles) {
+      combinedList.add(article);
+      if (article.url != null) {
+        urlsFromFirestore.add(article.url!);
+      }
+    }
     
-    // Luego agregar todos los artículos de la API
-    combinedList.addAll(apiArticles);
+    // Agregar artículos de la API solo si no están ya en Firebase
+    // NO verificamos el estado guardado aquí para evitar lentitud
+    for (final article in apiArticles) {
+      if (article.url == null || !urlsFromFirestore.contains(article.url!)) {
+        combinedList.add(article); // Se agrega con saved = false por defecto
+      }
+    }
     
     // Ordenar por fecha de publicación (más recientes primero)
     combinedList.sort((a, b) {
@@ -165,6 +214,8 @@ class ArticleRepositoryImpl implements ArticleRepository {
     
     return combinedList;
   }
+
+
 
 
 
@@ -226,7 +277,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
           try {
             return await _getArticlesFromApiByCategory(category);
           } catch (e) {
-            print('Error getting articles for category ${category.displayName}: $e');
+
             return <ArticleEntity>[];
           }
         });
@@ -277,6 +328,16 @@ class ArticleRepositoryImpl implements ArticleRepository {
   @override
   Future<DataState<void>> uploadArticle(ArticleEntity article) async {
     try {
+      // Calcular tiempo de lectura si no existe o es 0
+      int lectureTime = article.lectureTime ?? 0;
+      if (lectureTime == 0) {
+        // Para artículos subidos, usar contenido + descripción
+        final content = '${article.content ?? ''} ${article.description ?? ''}';
+        lectureTime = await _calculateLectureTime.call(
+          CalculateLectureTimeParams(content: content),
+        );
+      }
+      
       // Crear un modelo de artículo con un ID único
       final articleModel = ArticleModel(
         id: DateTime.now().millisecondsSinceEpoch, // ID único basado en timestamp
@@ -288,17 +349,139 @@ class ArticleRepositoryImpl implements ArticleRepository {
         publishedAt: DateTime.now().toIso8601String(), // Fecha actual
         content: article.content,
         source: 'DNews', // Source fijo para artículos subidos por usuarios
-        lectureTime: article.lectureTime,
+        lectureTime: lectureTime,
         category: ArticleCategory.dnews, // Siempre DNews para artículos subidos
+        saved: article.saved,
       );
 
       // Guardar en Firestore
       await _firestoreService.saveArticle(articleModel);
-      print('Article uploaded successfully to Firebase');
+
       
       return const DataSuccess(null);
     } catch (e) {
-      print('Error uploading article: $e');
+
+      return DataFailed(DioException(
+        requestOptions: RequestOptions(path: ''),
+        type: DioExceptionType.badResponse,
+        error: e,
+      ));
+    }
+  }
+
+  @override
+  Future<DataState<void>> saveArticle(ArticleEntity article) async {
+    try {
+      final articleModel = ArticleModel(
+        id: article.id,
+        author: article.author,
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        urlToImage: article.urlToImage,
+        publishedAt: article.publishedAt,
+        content: article.content,
+        source: article.source,
+        lectureTime: article.lectureTime,
+        category: article.category,
+        saved: true, // Siempre true cuando guardamos
+      );
+
+
+      
+      if (article.source == 'DNews' || article.category == ArticleCategory.dnews) {
+        // Si es de Firebase, actualizar el estado
+
+        await _firestoreService.updateArticleSavedStatus(articleModel, true);
+      } else {
+        // Si es de la API, guardarlo como nuevo documento en Firebase
+
+        await _firestoreService.saveArticleAsBookmark(articleModel);
+      }
+      
+
+      return const DataSuccess(null);
+    } catch (e) {
+
+      return DataFailed(DioException(
+        requestOptions: RequestOptions(path: ''),
+        type: DioExceptionType.badResponse,
+        error: e,
+      ));
+    }
+  }
+
+  @override
+  Future<DataState<void>> removeSavedArticle(ArticleEntity article) async {
+    try {
+      final articleModel = ArticleModel(
+        id: article.id,
+        author: article.author,
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        urlToImage: article.urlToImage,
+        publishedAt: article.publishedAt,
+        content: article.content,
+        source: article.source,
+        lectureTime: article.lectureTime,
+        category: article.category,
+        saved: article.saved,
+      );
+
+      // Intentar eliminar de ambas colecciones
+      // Esto maneja mejor los casos donde no sabemos exactamente dónde está guardado
+      await _firestoreService.removeSavedArticle(articleModel);
+      
+
+      return const DataSuccess(null);
+    } catch (e) {
+
+      return DataFailed(DioException(
+        requestOptions: RequestOptions(path: ''),
+        type: DioExceptionType.badResponse,
+        error: e,
+      ));
+    }
+  }
+
+  @override
+  Future<DataState<List<ArticleEntity>>> getSavedArticles() async {
+    try {
+      final savedArticles = await _firestoreService.getSavedArticles();
+      return DataSuccess(savedArticles.cast<ArticleEntity>());
+    } catch (e) {
+
+      return DataFailed(DioException(
+        requestOptions: RequestOptions(path: ''),
+        type: DioExceptionType.badResponse,
+        error: e,
+      ));
+    }
+  }
+
+  @override
+  Future<DataState<bool>> isArticleSaved(ArticleEntity article) async {
+    try {
+      final articleModel = ArticleModel(
+        id: article.id,
+        author: article.author,
+        title: article.title,
+        description: article.description,
+        url: article.url,
+        urlToImage: article.urlToImage,
+        publishedAt: article.publishedAt,
+        content: article.content,
+        source: article.source,
+        lectureTime: article.lectureTime,
+        category: article.category,
+        saved: article.saved,
+      );
+
+      final isBookmarked = await _firestoreService.isArticleSaved(articleModel);
+      return DataSuccess(isBookmarked);
+    } catch (e) {
+
       return DataFailed(DioException(
         requestOptions: RequestOptions(path: ''),
         type: DioExceptionType.badResponse,

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_bloc.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_state.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/bloc/article/remote/remote_article_event.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/widgets/article_tile.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/widgets/featured_article_tile.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/widgets/sticky_category_buttons.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/widgets/skeleton_views.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/pages/upload/upload_article.dart';
+import 'package:symmetry_showcase/features/daily_news/presentation/pages/saved_articles/saved_articles_page.dart';
 import 'package:symmetry_showcase/config/theme/app_themes.dart';
 import 'package:symmetry_showcase/features/daily_news/presentation/cubit/category_selection_cubit.dart';
 
@@ -90,20 +93,28 @@ class DailyNews extends StatelessWidget {
                   },
                 ),
               ),
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _navigateToSavedArticles(context),
                   borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.bookmark_border_outlined,
-                  color: AppColors.textPrimary,
-                  size: 24,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.bookmark_border_outlined,
+                      color: AppColors.textPrimary,
+                      size: 24,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24), // Espacio entre logo y header
+          const SizedBox(height: 16), // Espacio entre logo y header
           Text(
             _getGreeting(),
             style: const TextStyle(
@@ -157,96 +168,204 @@ class DailyNews extends StatelessWidget {
   Widget _buildBody() {
     return BlocBuilder<RemoteArticlesBloc, RemoteArticlesState>(
       builder: (context, state) {
-        // Solo mostrar loading completo si no hay artículos previos
+        // Mostrar skeleton con shimmer durante la carga
         if (state is RemoteArticlesLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return _buildSkeletonView();
         }
         
         // Para RemoteArticlesDone, mostrar contenido
         if (state is RemoteArticlesDone) {
           final articles = state.filteredArticles ?? [];
-          if (articles.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildCustomHeader(context),
-                  const SizedBox(height: 20),
-                  const Text('No hay artículos disponibles'),
-                ],
-              ),
-            );
-          }
-          
-          return CustomScrollView(
-            slivers: [
-              // Header como SliverToBoxAdapter
-              SliverToBoxAdapter(
-                child: _buildCustomHeader(context),
-              ),
-              // Botones sticky
-              const StickyCategoryButtons(),
-              // Lista de artículos
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index == 0) {
-                      // Primera noticia en formato destacado
-                      return Column(
-                        children: [
-                          FeaturedArticleTile(article: articles[index]),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), 
-                            child: Divider(height: 1, color: AppColors.borderLight),
+          return _buildContentView(articles);
+        }
+        
+        return _buildErrorState();
+      },
+    );
+  }
+
+  Widget _buildSkeletonView() {
+    return CustomScrollView(
+      slivers: [
+        // Header normal (sin skeleton)
+        SliverToBoxAdapter(
+          child: Builder(
+            builder: (context) => _buildCustomHeader(context),
+          ),
+        ),
+        // Botones sticky normales (sin skeleton)
+        const StickyCategoryButtons(),
+        // Lista de artículos con skeleton
+        SliverPadding(
+          padding: const EdgeInsets.only(bottom: 32),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                if (index == 0) {
+                  // Primera noticia skeleton en formato destacado
+                  return Column(
+                    children: [
+                      SkeletonFeaturedArticleTile(uniqueId: -1000), // ID único negativo para skeleton
+                      // Siempre mostrar divider y "Top headlines" en skeleton ya que simula múltiples artículos
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), 
+                        child: Divider(height: 1, color: AppColors.borderLight),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 24, top: 16),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Top headlines',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                          const Padding(
-                            padding: EdgeInsets.only(left: 24, top: 16),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Top headlines',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  // Resto de noticias skeleton en formato normal
+                  return Column(
+                    children: [
+                      SkeletonArticleTile(uniqueId: -1000 - index), // ID único negativo para cada skeleton
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16), 
+                        child: Divider(height: 1, color: AppColors.borderLight),
+                      ),
+                    ],
+                  );
+                }
+              },
+              childCount: 5, // Mostrar 5 elementos skeleton
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoArticlesMessage() {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            Icon(
+              Icons.article_outlined,
+              size: 64,
+              color: AppColors.textSecondary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Ups! No articles were found',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Try selecting another category or refresh to see more content.',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentView(List articles) {
+    return CustomScrollView(
+      slivers: [
+        // Header como SliverToBoxAdapter
+        SliverToBoxAdapter(
+          child: Builder(
+            builder: (context) => _buildCustomHeader(context),
+          ),
+        ),
+        // Botones sticky
+        const StickyCategoryButtons(),
+        // Lista de artículos o mensaje de vacío
+        if (articles.isEmpty)
+          _buildNoArticlesMessage()
+        else
+          SliverPadding(
+            padding: const EdgeInsets.only(bottom: 100),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                                if (index == 0) {
+                  // Primera noticia en formato destacado
+                  return Column(
+                    children: [
+                      FeaturedArticleTile(article: articles[index]),
+                      // Solo mostrar divider y "Top headlines" si hay más de un artículo
+                      if (articles.length > 1) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16), 
+                          child: Divider(height: 1, color: AppColors.borderLight),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 24, top: 16),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Top headlines',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
-                        ],
-                      );
-                    } else {
-                      // Resto de noticias en formato normal
-                      return Column(
-                        children: [
-                          ArticleTile(article: articles[index]),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16), 
-                            child: Divider(height: 1, color: AppColors.borderLight),
-                          ),
-                        ],
-                      );
-                    }
-                  },
-                  childCount: articles.length,
-                ),
+                        ),
+                      ],
+                    ],
+                  );
+                } else {
+                    // Resto de noticias en formato normal
+                    return Column(
+                      children: [
+                        ArticleTile(article: articles[index]),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4, horizontal: 16), 
+                          child: Divider(height: 1, color: AppColors.borderLight),
+                        ),
+                      ],
+                    );
+                  }
+                },
+                childCount: articles.length,
               ),
-            ],
-          );
-        }
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildCustomHeader(context),
-              const SizedBox(height: 20),
-              const Text('Error al cargar las noticias'),
-            ],
+            ),
           ),
-        );
-      },
+      ],
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Builder(
+            builder: (context) => _buildCustomHeader(context),
+          ),
+          const SizedBox(height: 20),
+          const Text('Error al cargar las noticias'),
+        ],
+      ),
     );
   }
 
@@ -261,5 +380,13 @@ class DailyNews extends StatelessWidget {
     if (result == true && context.mounted) {
       context.read<RemoteArticlesBloc>().add(const RefreshFirebaseArticles());
     }
+  }
+
+  Future<void> _navigateToSavedArticles(BuildContext context) async {
+    await Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) => const SavedArticlesPage(),
+      ),
+    );
   }
 }

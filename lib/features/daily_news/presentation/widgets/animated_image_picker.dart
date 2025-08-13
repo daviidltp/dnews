@@ -163,7 +163,7 @@ class _AnimatedImagePickerState extends State<AnimatedImagePicker>
           ),
           const SizedBox(height: 16),
           Text(
-            'Toca para seleccionar una imagen',
+            'Tap to select an image',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 16,
@@ -172,7 +172,7 @@ class _AnimatedImagePickerState extends State<AnimatedImagePicker>
           ),
           const SizedBox(height: 8),
           Text(
-            'Formato vertical recomendado',
+            'Vertical format recommended',
             style: TextStyle(
               color: AppColors.textSecondary.withOpacity(0.7),
               fontSize: 14,

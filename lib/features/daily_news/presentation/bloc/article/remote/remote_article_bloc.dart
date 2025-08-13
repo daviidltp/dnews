@@ -35,13 +35,13 @@ class RemoteArticlesBloc extends Bloc<RemoteArticlesEvent, RemoteArticlesState> 
     }
 
     if (dataState is DataFailed) {
-      print(dataState.error);
+
       emit(RemoteArticlesError(dataState.error!));
     }
   }
 
   void onRefreshFirebaseArticles(RefreshFirebaseArticles event, Emitter<RemoteArticlesState> emit) async {
-    print('RefreshFirebaseArticles event triggered');
+
     
     // Agregar un pequeño delay para asegurar que Firebase haya propagado los cambios
     await Future.delayed(const Duration(milliseconds: 500));
@@ -49,7 +49,7 @@ class RemoteArticlesBloc extends Bloc<RemoteArticlesEvent, RemoteArticlesState> 
     final dataState = await _getArticleUseCase(null); // Obtener todos los artículos (API + Firebase)
 
     if (dataState is DataSuccess && dataState.data != null) {
-      print('RefreshFirebaseArticles: ${dataState.data!.length} artículos obtenidos');
+
       
       final currentState = state;
       final selectedCategories = currentState is RemoteArticlesDone 
@@ -65,7 +65,7 @@ class RemoteArticlesBloc extends Bloc<RemoteArticlesEvent, RemoteArticlesState> 
         selectedCategories: selectedCategories,
       ));
     } else if (dataState is DataFailed) {
-      print('RefreshFirebaseArticles error: ${dataState.error}');
+
       emit(RemoteArticlesError(dataState.error!));
     }
   }

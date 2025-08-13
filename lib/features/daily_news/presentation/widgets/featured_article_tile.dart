@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../../domain/entities/article.dart';
 import '../../../../config/theme/app_themes.dart';
 import '../pages/article_view/article_view.dart';
@@ -54,13 +55,12 @@ class FeaturedArticleTile extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: article.urlToImage!,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: AppColors.surface,
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                      ),
+                  placeholder: (context, url) => Skeletonizer(
+                    enabled: true,
+                    child: Container(
+                      color: AppColors.surface,
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
                   ),
                   errorWidget: (context, url, error) => Container(
@@ -124,19 +124,44 @@ class FeaturedArticleTile extends StatelessWidget {
                          Icon(
                           Icons.newspaper,
                           size: 14,
-                          color: article.source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
+                          color: AppColors.textSecondary,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
-                          child: Text(
-                            article.source ?? 'No Source',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: article.source == 'DNews' ? AppColors.accent : AppColors.textSecondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                          ),
+                          flex: 7,
+                          child: article.source == 'DNews'
+                            ? RichText(
+                                text: const TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'D',
+                                      style: TextStyle(
+                                        color: AppColors.accent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'News',
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            : Text(
+                                article.source ?? 'Anónimo',
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                         ),
                       ],
                     ),
