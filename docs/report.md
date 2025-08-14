@@ -71,10 +71,10 @@ Esto permitiría a la gente tener una plataforma no subvencionada donde informar
 
 Las nuevas funcionalidades implementadas son:
 
-- [Poder acceder al contenido de una noticia](videos/article_view_showcase.mp4): al hacer click en una noticia, el usuario puede leer su contenido, no solo ver el titular y la descripción desde fuera como en el diseño inicial.
-- Posibilidad de [escribir texto en formato Markdown](videos/markdown_showcase.mp4) al escribir un artículo.
-- [Artículos guardados](videos/bookmarks_showcase.mp4): el usuario puede guardar los artículos que quiera y luego acceder a ellos desde la Home Page en el icono del marcador.
-- [Cambiar las distintas categorías de noticias](videos/categories_showcase.mp4): he implementado un ScrollView horizontal que se queda pegado arriba de la pantalla cuando estás viendo noticias, para así cambiar fácilmente de categoría incluso si estoy al final de una categoría, sin tener que scrollear hasta arriba del todo para cambiar la sección. Las categorías son: General, Business, Health, Science, Technology, DNews. La categoría DNews contiene únicamente los artículos creados por el usuario.
+- [Poder acceder al contenido de una noticia](https://drive.google.com/file/d/16TQlnA65OYTk1LqdrYgGHrs23lh9-pb5/view?usp=drive_link): al hacer click en una noticia, el usuario puede leer su contenido, no solo ver el titular y la descripción desde fuera como en el diseño inicial.
+- Posibilidad de [escribir texto en formato Markdown](https://drive.google.com/file/d/1aXtrt6Nj-r8gCOyeSlwSzI7pHXkbi8WI/view?usp=drive_link) al escribir un artículo.
+- [Artículos guardados](https://drive.google.com/file/d/1vlEI_p7XjRB0FKIyqZdO04aPK836WTRO/view?usp=drive_link): el usuario puede guardar los artículos que quiera y luego acceder a ellos desde la Home Page en el icono del marcador.
+- [Cambiar las distintas categorías de noticias](https://drive.google.com/file/d/1GZCjDHTKoVEQ_DkXHM-6q0w07mee1W1c/view?usp=drive_link): he implementado un ScrollView horizontal que se queda pegado arriba de la pantalla cuando estás viendo noticias, para así cambiar fácilmente de categoría incluso si estoy al final de una categoría, sin tener que scrollear hasta arriba del todo para cambiar la sección. Las categorías son: General, Business, Health, Science, Technology, DNews. La categoría DNews contiene únicamente los artículos creados por el usuario.
 - Cálculo de tiempo de lectura de los artículos: para mostrar el tiempo de lectura real de los artículos, básicamente cojo el length del contenido al extraer los datos de la api (en la implementación del repositorio). Como los artículos de la API tienen el contenido cortado pero muestran, por ejemplo [+3942 chars], he utilizado expresiones regulares para extraer ese extra de caracteres y ponerles un tiempo de lectura accurate, considerando que el humano promedio lee unas 200 palabras por minuto. Cuanto más escribas en una noticia, más tiempo de lectura tendrá, así el usuario está bien informado antes de leerla.
 
 Otras funcionalidades secundarias:
@@ -99,3 +99,4 @@ Tiempo dedicado al proyecto:
 Enlaces:
 - [Repositorio en GitHub](https://github.com/daviidltp/dnews)
 - [Proyecto completo en Figma](https://www.figma.com/design/UrHlnVc3AjC9ekC7OgyzGq/Untitled?node-id=0-1&t=gSL19F1YxGHJzXF7-1)
+- [Video completo enseñando la app](https://drive.google.com/file/d/1RuG3N4iXRNQ8UygLoojNmCcvzwD2OICn/view?usp=drive_link)
