@@ -29,11 +29,6 @@ class FirebaseStorageServiceImpl implements FirebaseStorageService {
       // Subir el archivo con metadata y timeout reducido
       final uploadTask = ref.putFile(imageFile, metadata);
       
-      // Mostrar progreso de la subida
-      uploadTask.snapshotEvents.listen((snapshot) {
-        final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-
-      });
       
       final snapshot = await uploadTask.timeout(
         const Duration(minutes: 1), // Reducir timeout a 1 minuto

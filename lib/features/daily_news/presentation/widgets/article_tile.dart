@@ -137,7 +137,6 @@ class ArticleTile extends StatelessWidget {
 
   Widget _buildBottomInfo() {
     final content = (article.content ?? article.description ?? '');
-    final readingTime = _calculateReadingTime(content);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

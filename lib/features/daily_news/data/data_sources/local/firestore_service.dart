@@ -62,9 +62,6 @@ class FirestoreServiceImpl implements FirestoreService {
       final articles = <ArticleModel>[];
       for (final doc in querySnapshot.docs) {
         try {
-          final data = doc.data();
-
-          
           final article = ArticleModel.fromFirestore(doc);
           articles.add(article);
         } catch (e) {
