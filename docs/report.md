@@ -94,3 +94,8 @@ Tiempo dedicado al proyecto:
 
 - Comencé a trabajar en él el lunes a las 17 de la tarde (aunque estuve todo el día etendiendo los principios de limpieza del código)
 - El martes comencé la app. El miércoles por la noche la acabé. En estos dos días le habré dedicado unas 16 horas al proyecto y otras 2 horas el jueves para elaborar el reporte y grabar los vídeos.
+
+
+Enlaces:
+- [Repositorio en GitHub](https://github.com/daviidltp/dnews)
+- [Proyecto completo en Figma](https://www.figma.com/design/UrHlnVc3AjC9ekC7OgyzGq/Untitled?node-id=0-1&t=gSL19F1YxGHJzXF7-1)
