@@ -227,7 +227,7 @@ class _DailyNewsState extends State<DailyNews> {
     }
   }
 
-
+  // Widgets de apoyo para mantener la limpieza en el widget principal
 
   Widget _buildBody() {
     return BlocBuilder<RemoteArticlesBloc, RemoteArticlesState>(

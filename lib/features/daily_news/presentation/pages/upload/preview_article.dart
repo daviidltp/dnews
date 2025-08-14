@@ -79,6 +79,9 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
     );
   }
 
+
+  // Widgets de apoyo para mantener la limpieza en el widget principal
+
   Widget _buildCustomAppBar() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -361,8 +364,4 @@ class _PreviewArticlePageState extends State<PreviewArticlePage> {
     // El bloc se encargará de emitir el estado de loading inmediatamente
     context.read<UploadArticleBloc>().add(UploadArticle(article: article));
   }
-
-
-
-
 }

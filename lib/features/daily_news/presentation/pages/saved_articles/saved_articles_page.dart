@@ -94,6 +94,8 @@ class _SavedArticlesPageState extends State<SavedArticlesPage> {
     );
   }
 
+  // Widgets de apoyo para mantener la limpieza en el widget principal
+
   Widget _buildHeader() {
     return BlocBuilder<SavedArticlesBloc, SavedArticlesState>(
       builder: (context, state) {

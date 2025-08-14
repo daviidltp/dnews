@@ -1,16 +1,7 @@
-# symmetry_showcase
+# Importante para el evaluador
 
-A new Flutter project.
+El reporte/informe del proyecto está en la raíz, en la carpeta docs/, junto a vídeos, imágenes y el enlace al figma.
 
-## Getting Started
+Los archivos de firebase, por comodidad están en la raíz del proyecto, pero el esquema de los artículos está en la carpeta backend/
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+El resto del código (frontend) sigue una organización normal de flutter, estando todo agrupado en la carpeta de la raíz lib/, y los assets están en la carpeta assets/

@@ -124,6 +124,8 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
     );
   }
 
+  // Widgets de apoyo para mantener la limpieza en el widget principal
+
   PreferredSizeWidget _buildCustomAppBar() {
     return AppBar(
       backgroundColor: AppColors.background,
@@ -284,10 +286,6 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
     );
   }
 
-
-
-
-
   Widget _buildImagePicker() {
     return BlocBuilder<InputFocusCubit, bool>(
       builder: (context, isAnyInputFocused) {
@@ -299,8 +297,6 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
       },
     );
   }
-
-
 
   void _handleImagePickerTap() {
     // El AnimatedImagePicker ya se encarga de cerrar el teclado
@@ -332,8 +328,6 @@ class _UploadArticlePageState extends State<UploadArticlePage> {
       );
     }
   }
-
-
 
   Future<void> _goToPreview() async {
     if (_isFormValid) {
